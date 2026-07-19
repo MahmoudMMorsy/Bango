@@ -82,20 +82,20 @@ fun MainScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                // Miniature Glowing Bing Logo Badge
+                                // Miniature Glowing Bango Logo Badge
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(
                                             Brush.linearGradient(
-                                                colors = listOf(Color(0xFF0078D4), Color(0xFF00F2FE))
+                                                colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
                                             )
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "b",
+                                        text = "B",
                                         color = Color.White,
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Black,
@@ -104,13 +104,13 @@ fun MainScreen(
                                 }
                                 Column {
                                     Text(
-                                        text = "برنامج بانجو الآلي",
+                                        text = "برنامج بانجو الآلي v2",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
                                     )
                                     Text(
-                                        text = "محرك الأتمتة والبحث الذكي • Copilot AI",
+                                        text = "متصفح التخفي المطور • أمن وحماية الهوية 🛡️",
                                         fontSize = 10.sp,
                                         color = Color.LightGray.copy(alpha = 0.8f)
                                     )
@@ -122,7 +122,8 @@ fun MainScreen(
                                 modifier = Modifier
                                     .padding(end = 16.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (viewModel.isAutomationRunning) Color(0xFF047857) else Color(0xFF1E2F4C))
+                                    .background(if (viewModel.isAutomationRunning) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF1E2F4C))
+                                    .border(1.dp, if (viewModel.isAutomationRunning) Color(0xFF10B981) else Color.Transparent, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 10.dp, vertical = 6.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -147,12 +148,12 @@ fun MainScreen(
                                                 .size(8.dp)
                                                 .drawBehind {
                                                     drawCircle(
-                                                        color = Color(0xFF34D399),
+                                                        color = Color(0xFF10B981),
                                                         alpha = alpha
                                                     )
                                                 }
                                         )
-                                        Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF34D399), fontWeight = FontWeight.Bold)
+                                        Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
                                     } else {
                                         Box(
                                             modifier = Modifier
@@ -181,9 +182,9 @@ fun MainScreen(
                             icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
                             label = { Text("بينج اليوم") },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF00F2FE),
-                                selectedTextColor = Color(0xFF00F2FE),
-                                indicatorColor = Color(0xFF0078D4).copy(alpha = 0.25f),
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
                                 unselectedIconColor = Color.LightGray,
                                 unselectedTextColor = Color.LightGray
                             )
@@ -191,12 +192,38 @@ fun MainScreen(
                         NavigationBarItem(
                             selected = viewModel.selectedTab == 1,
                             onClick = { viewModel.selectedTab = 1 },
-                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = "الأتمتة الحية") },
+                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = "المتصفح") },
                             label = { Text("المتصفح") },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF00F2FE),
-                                selectedTextColor = Color(0xFF00F2FE),
-                                indicatorColor = Color(0xFF0078D4).copy(alpha = 0.25f),
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
+                            )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 2,
+                            onClick = { viewModel.selectedTab = 2 },
+                            icon = { Icon(Icons.Default.Build, contentDescription = "لوحة الأوامر") },
+                            label = { Text("لوحة الأوامر") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
+                            )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 3,
+                            onClick = { viewModel.selectedTab = 3 },
+                            icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
+                            label = { Text("الشبكة") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
                                 unselectedIconColor = Color.LightGray,
                                 unselectedTextColor = Color.LightGray
                             )
@@ -207,100 +234,73 @@ fun MainScreen(
                             icon = { Icon(Icons.Default.Person, contentDescription = "البروفايلات") },
                             label = { Text("الهويات") },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF00F2FE),
-                                selectedTextColor = Color(0xFF00F2FE),
-                                indicatorColor = Color(0xFF0078D4).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
-                            )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 2,
-                            onClick = { viewModel.selectedTab = 2 },
-                            icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
-                            label = { Text("الشبكة") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF00F2FE),
-                                selectedTextColor = Color(0xFF00F2FE),
-                                indicatorColor = Color(0xFF0078D4).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
-                            )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 3,
-                            onClick = { viewModel.selectedTab = 3 },
-                            icon = { Icon(Icons.Default.List, contentDescription = "سجل العمليات") },
-                            label = { Text("سجل البحث") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF00F2FE),
-                                selectedTextColor = Color(0xFF00F2FE),
-                                indicatorColor = Color(0xFF0078D4).copy(alpha = 0.25f),
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
                                 unselectedIconColor = Color.LightGray,
                                 unselectedTextColor = Color.LightGray
                             )
                         )
                     }
-            },
-            containerColor = BackgroundDark,
-            modifier = modifier
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                when (viewModel.selectedTab) {
-                    0 -> DashboardTab(
-                        viewModel = viewModel,
-                        activeTopic = activeTopic,
-                        queries = queries,
-                        onStartAutopilot = {
-                            viewModel.selectedTab = 1
-                            viewModel.startLiveAutomation { url, ua ->
-                                activeWebViewReference?.let { webView ->
-                                    try {
-                                        webView.settings.userAgentString = ua
-                                        webView.loadUrl(url)
-                                        // Trigger human scroll action inside WebView
-                                        coroutineScope.launch {
-                                            try {
-                                                delay(1500)
-                                                webView.evaluateJavascript("window.scrollBy({ top: 350, behavior: 'smooth' });", null)
-                                            } catch (t: Throwable) {
-                                                t.printStackTrace()
+                },
+                containerColor = BackgroundDark,
+                modifier = modifier
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    when (viewModel.selectedTab) {
+                        0 -> DashboardTab(
+                            viewModel = viewModel,
+                            activeTopic = activeTopic,
+                            queries = queries,
+                            onStartAutopilot = {
+                                viewModel.selectedTab = 1
+                                viewModel.startLiveAutomation { url, ua ->
+                                    activeWebViewReference?.let { webView ->
+                                        try {
+                                            webView.settings.userAgentString = ua
+                                            webView.loadUrl(url)
+                                            // Trigger human scroll action inside WebView
+                                            coroutineScope.launch {
+                                                try {
+                                                    delay(1500)
+                                                    webView.evaluateJavascript("window.scrollBy({ top: 350, behavior: 'smooth' });", null)
+                                                } catch (t: Throwable) {
+                                                    t.printStackTrace()
+                                                }
                                             }
+                                        } catch (t: Throwable) {
+                                            t.printStackTrace()
                                         }
-                                    } catch (t: Throwable) {
-                                        t.printStackTrace()
                                     }
                                 }
                             }
-                        }
-                    )
-                    1 -> AutopilotTab(
-                        viewModel = viewModel,
-                        activeTopic = activeTopic,
-                        terminalLogs = terminalLogs,
-                        defaultProfile = defaultProfile,
-                        onWebViewCreated = { webView ->
-                            activeWebViewReference = webView
-                        }
-                    )
-                    2 -> ProxiesTab(
-                        viewModel = viewModel,
-                        proxies = proxies
-                    )
-                    3 -> LogsTab(
-                        viewModel = viewModel,
-                        logs = logs
-                    )
-                    4 -> ProfilesTab(
-                        viewModel = viewModel
-                    )
+                        )
+                        1 -> AutopilotTab(
+                            viewModel = viewModel,
+                            defaultProfile = defaultProfile,
+                            onWebViewCreated = { webView ->
+                                activeWebViewReference = webView
+                            }
+                        )
+                        2 -> TerminalTab(
+                            viewModel = viewModel,
+                            terminalLogs = terminalLogs,
+                            logs = logs
+                        )
+                        3 -> ProxiesTab(
+                            viewModel = viewModel,
+                            proxies = proxies
+                        )
+                        4 -> ProfilesTab(
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
-          }
         }
     }
 }
@@ -334,9 +334,9 @@ fun BingSplashScreen() {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF070B19), // Dark Blue Space
-                        Color(0xFF101B35), // Deep Navy
-                        Color(0xFF152238)  // Slate Edge
+                        Color(0xFF030A05), // Deep Emerald Space
+                        Color(0xFF07140B), // Slate Green
+                        Color(0xFF0E1F13)  // Edge Dark Green
                     )
                 )
             ),
@@ -348,19 +348,14 @@ fun BingSplashScreen() {
                 .fillMaxSize()
                 .drawBehind {
                     drawCircle(
-                        color = Color(0xFF0078D4).copy(alpha = 0.12f),
+                        color = Color(0xFF4CAF50).copy(alpha = 0.12f),
                         radius = size.minDimension * 0.5f,
                         center = Offset(size.width * 0.2f, size.height * 0.3f)
                     )
                     drawCircle(
-                        color = Color(0xFF7F56D9).copy(alpha = 0.12f),
+                        color = Color(0xFF008272).copy(alpha = 0.12f),
                         radius = size.minDimension * 0.5f,
                         center = Offset(size.width * 0.8f, size.height * 0.7f)
-                    )
-                    drawCircle(
-                        color = Color(0xFF008272).copy(alpha = 0.1f),
-                        radius = size.minDimension * 0.4f,
-                        center = Offset(size.width * 0.5f, size.height * 0.5f)
                     )
                 }
         )
@@ -370,7 +365,7 @@ fun BingSplashScreen() {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier.padding(32.dp)
         ) {
-            // Stylized Glowing Bing/Copilot Logo using Canvas
+            // Stylized Glowing Bango Logo using Canvas
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -378,7 +373,7 @@ fun BingSplashScreen() {
                         // Background glow
                         drawCircle(
                             brush = Brush.radialGradient(
-                                colors = listOf(Color(0xFF00F2FE).copy(alpha = 0.3f), Color.Transparent),
+                                colors = listOf(Color(0xFF4CAF50).copy(alpha = 0.3f), Color.Transparent),
                                 radius = size.width * 0.8f
                             ),
                             radius = size.width * 0.8f
@@ -386,7 +381,6 @@ fun BingSplashScreen() {
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Drawing Bing "b" stylized loop
                 androidx.compose.foundation.Canvas(
                     modifier = Modifier
                         .size(80.dp)
@@ -398,10 +392,10 @@ fun BingSplashScreen() {
                     val width = size.width
                     val height = size.height
 
-                    // Drawing the circular loop base of the "b"
+                    // Drawing base loop of the letter 'B'
                     drawArc(
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF00F2FE), Color(0xFF0078D4))
+                            colors = listOf(Color(0xFF4CAF50), Color(0xFF1E6B38))
                         ),
                         startAngle = 0f,
                         sweepAngle = 360f,
@@ -412,10 +406,10 @@ fun BingSplashScreen() {
                         )
                     )
 
-                    // Drawing the vertical spine of the "b"
+                    // Vertical spine
                     drawLine(
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF7F56D9), Color(0xFF00F2FE))
+                            colors = listOf(Color(0xFF008272), Color(0xFF4CAF50))
                         ),
                         start = Offset(x = 12.dp.toPx(), y = -16.dp.toPx()),
                         end = Offset(x = 12.dp.toPx(), y = height - 12.dp.toPx()),
@@ -423,10 +417,10 @@ fun BingSplashScreen() {
                         cap = androidx.compose.ui.graphics.StrokeCap.Round
                     )
 
-                    // Accent Copilot light dot
+                    // Glowing center dot
                     drawCircle(
                         color = Color(0xFF10B981),
-                        radius = 5.dp.toPx(),
+                        radius = 6.dp.toPx(),
                         center = Offset(x = 12.dp.toPx(), y = -16.dp.toPx())
                     )
                 }
@@ -436,7 +430,7 @@ fun BingSplashScreen() {
 
             // Brand Titles
             Text(
-                text = "برنامج بانجو الآلي",
+                text = "برنامج بانجو الآلي v2",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -444,15 +438,15 @@ fun BingSplashScreen() {
             )
 
             Text(
-                text = "Bango Autopilot Browser",
+                text = "Bango Antidetect Browser",
                 fontSize = 14.sp,
-                color = Color(0xFF00F2FE),
+                color = Color(0xFF4CAF50),
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = "أمن سيبراني متكامل • أتمتة بحث ذكية • إدارة بروكسي سحابي",
+                text = "حماية كاملة للهوية • بروفايلات منعزلة تماماً • أتمتة بحث ذكية",
                 fontSize = 12.sp,
                 color = Color.LightGray.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
@@ -460,13 +454,12 @@ fun BingSplashScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Horizontal custom loading bar
+            // Loading bar
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.width(220.dp)
             ) {
-                // Background Track
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -474,7 +467,6 @@ fun BingSplashScreen() {
                         .clip(RoundedCornerShape(3.dp))
                         .background(Color.White.copy(alpha = 0.1f))
                 ) {
-                    // Progress Fill with Bing Copilot Gradient
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(progress)
@@ -483,9 +475,9 @@ fun BingSplashScreen() {
                             .background(
                                 Brush.horizontalGradient(
                                     colors = listOf(
-                                        Color(0xFF0078D4), // Blue
-                                        Color(0xFF00F2FE), // Teal
-                                        Color(0xFF7F56D9)  // Purple
+                                        Color(0xFF1E6B38),
+                                        Color(0xFF4CAF50),
+                                        Color(0xFF008272)
                                     )
                                 )
                             )
@@ -494,10 +486,10 @@ fun BingSplashScreen() {
 
                 Text(
                     text = when {
-                        progress < 0.3f -> "جاري تأمين البصمة الرقمية للشبكة..."
-                        progress < 0.6f -> "تجهيز خوادم البروكسي الدوّار المدمجة..."
-                        progress < 0.9f -> "تحميل مستشار الأمن الذكي لـ Copilot AI..."
-                        else -> "بدء الاتصال الآمن بالشبكة المشفرة..."
+                        progress < 0.3f -> "جاري عزل وتأمين بروفايلات الهويات..."
+                        progress < 0.6f -> "تحميل خوارزميات التزييف والـ Spoofing..."
+                        progress < 0.9f -> "تشغيل خزانة الوكلاء والـ VPN المشفر..."
+                        else -> "فتح مرصد التصفح السحابي الآمن..."
                     },
                     fontSize = 10.sp,
                     color = Color.Gray,
@@ -535,15 +527,14 @@ fun DashboardTab(
                         .background(
                             Brush.linearGradient(
                                 colors = listOf(
-                                    Color(0xFF0F172A), // Dark Slate
-                                    Color(0xFF0078D4), // Bing Ocean Blue
-                                    Color(0xFF008272), // Bing Teal
-                                    Color(0xFF7F56D9)  // Copilot Indigo
+                                    Color(0xFF07140B), // Dark Green
+                                    Color(0xFF1E6B38), // Bango Green
+                                    Color(0xFF008272), // Bango Teal
+                                    Color(0xFF2E7D32)  // Forest Green
                                 )
                             )
                         )
                         .drawBehind {
-                            // Artistic glass ripples
                             drawCircle(
                                 color = Color.White.copy(alpha = 0.05f),
                                 radius = size.minDimension * 0.6f,
@@ -569,10 +560,10 @@ fun DashboardTab(
                                     .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("b", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                Text("B", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                             }
                             Text(
-                                text = "Bing",
+                                text = "Bango",
                                 color = Color.White,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
@@ -581,15 +572,15 @@ fun DashboardTab(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF7F56D9))
+                                    .background(Color(0xFF10B981))
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
-                                Text("Copilot", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text("Autopilot", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             }
                         }
 
                         Text(
-                            text = "صورة اليوم المميزة • استكشاف ذكي مستقل ومجهول الهوية",
+                            text = "استكشاف وتصفح مجهول الهوية بالكامل • تدوير بروكسيات",
                             fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium
@@ -621,7 +612,7 @@ fun DashboardTab(
                                         tint = Color.White
                                     )
                                     Text(
-                                        text = if (activeTopic != null) activeTopic.topicText else "اسألني عن أي شيء لتوليد خطة بحث مخصصة...",
+                                        text = if (activeTopic != null) activeTopic.topicText else "اسأل الذكاء الاصطناعي لإنشاء خطة استعلام ذكية...",
                                         color = if (activeTopic != null) Color.White else Color.White.copy(alpha = 0.6f),
                                         fontSize = 12.sp,
                                         maxLines = 1,
@@ -662,7 +653,7 @@ fun DashboardTab(
                             Text("إلغاء", color = Color.Gray)
                         }
                     },
-                    containerColor = Color(0xFF1E293B),
+                    containerColor = Color(0xFF162A1F),
                     title = {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -686,12 +677,6 @@ fun DashboardTab(
                                 color = Color.White,
                                 textAlign = TextAlign.Center
                             )
-                            Text(
-                                text = "اختر حساباً للمتابعة إلى برنامج بانجو الآلي",
-                                fontSize = 11.sp,
-                                color = Color.LightGray,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     },
                     text = {
@@ -704,7 +689,7 @@ fun DashboardTab(
                                     viewModel.signInWithGoogle("mahmoudmorsy949@gmail.com", "محمود مرسي")
                                     showAccountSelector = false
                                 },
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                                colors = CardDefaults.cardColors(containerColor = BackgroundDark),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -721,7 +706,7 @@ fun DashboardTab(
                                             .clip(CircleShape)
                                             .background(
                                                 Brush.linearGradient(
-                                                    colors = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8))
+                                                    colors = listOf(Color(0xFF4CAF50), Color(0xFF1E6B38))
                                                 )
                                             ),
                                         contentAlignment = Alignment.Center
@@ -754,35 +739,6 @@ fun DashboardTab(
                                     )
                                 }
                             }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "حساب آخر",
-                                    tint = Color.Gray,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = "استخدام حساب آخر",
-                                    color = Color.LightGray,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "لمتابعة المزامنة، سيشارك Google اسمك وعنوان بريدك الإلكتروني وصورتك الشخصية مع هذا التطبيق لتأمين وحفظ بصمات المتصفح السحابية الخاصة بك.",
-                                fontSize = 10.sp,
-                                color = Color.Gray,
-                                lineHeight = 14.sp
-                            )
                         }
                     }
                 )
@@ -790,7 +746,7 @@ fun DashboardTab(
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = if (viewModel.isGoogleSignedIn) Color(0xFF132A1C) else SurfaceDark
+                    containerColor = if (viewModel.isGoogleSignedIn) Color(0xFF0F2618) else SurfaceDark
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -817,7 +773,7 @@ fun DashboardTab(
                                     .clip(CircleShape)
                                     .background(
                                         Brush.linearGradient(
-                                            colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                                            colors = listOf(Color(0xFF4CAF50), Color(0xFF1E6B38))
                                         )
                                     ),
                                 contentAlignment = Alignment.Center
@@ -849,7 +805,7 @@ fun DashboardTab(
                                     ) {
                                         Text(
                                             text = "مـمـيـز",
-                                            color = Color(0xFF34D399),
+                                            color = Color(0xFF10B981),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -882,13 +838,13 @@ fun DashboardTab(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "آمن",
-                                tint = Color(0xFF34D399),
+                                tint = Color(0xFF10B981),
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "مزامنة سحابية نشطة • لا حاجة لإدخال مفاتيح API يدوية",
+                                text = "مزامنة سحابية نشطة • وضع التخفي والمزايا الاحترافية مفعلة ✨",
                                 fontSize = 11.sp,
-                                color = Color(0xFF34D399),
+                                color = Color(0xFF10B981),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -914,13 +870,13 @@ fun DashboardTab(
                             }
                             Column {
                                 Text(
-                                    text = "تفعيل المزايا الذكية بنقرة واحدة 🚀",
+                                    text = "تفعيل المزايا المتقدمة فوراً 🚀",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "سجل الدخول بحساب Google لتجاوز متطلبات مفتاح API والبدء فوراً",
+                                    text = "سجل دخولك بحساب Google لتفعيل ميزات الهوية السحابية",
                                     fontSize = 10.sp,
                                     color = Color.LightGray
                                 )
@@ -962,7 +918,7 @@ fun DashboardTab(
                 colors = CardDefaults.cardColors(containerColor = SurfaceDark),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, PrimaryBlue.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
@@ -977,11 +933,11 @@ fun DashboardTab(
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Security AI Advisor",
-                            tint = PrimaryBlue,
+                            tint = Color(0xFF4CAF50),
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "المستشار الأمني الذكي للشبكة 🛡️",
+                            text = "المستشار الأمني والذكاء الاصطناعي لـ Bango 🛡️",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = Color.White
@@ -989,15 +945,15 @@ fun DashboardTab(
                     }
 
                     Text(
-                        text = "نظام ذكاء اصطناعي سيبراني متكامل لتحليل بصمات المتصفحات، توجيه حركة المرور المشفرة وتخصيص سيناريوهات التخفي المتقدمة.",
+                        text = "نظام ذكي متكامل لتحليل بصمات المتصفح (Canvas, WebGL, RTC, ClientRects) واقتراح تدوير البروكسيات لفك الكتم.",
                         fontSize = 11.sp,
                         color = Color.LightGray
                     )
 
-                    // Gemini API Key Input / Google Premium Badge
+                    // Gemini API Key Input
                     if (viewModel.isGoogleSignedIn) {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                            colors = CardDefaults.cardColors(containerColor = BackgroundDark),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -1007,8 +963,8 @@ fun DashboardTab(
                             ) {
                                 Icon(Icons.Default.CheckCircle, contentDescription = "نشط", tint = Color(0xFF10B981))
                                 Column {
-                                    Text("🔑 مفتاح API مُدار سحابياً", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                    Text("تم ربط مفتاح API السحابي للذكاء الاصطناعي تلقائياً بحساب Google المميز الخاص بك.", color = Color.LightGray, fontSize = 10.sp)
+                                    Text("🔑 مفتاح API مُدار سحابياً ونشط", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Text("تم ربط الذكاء الاصطناعي بحسابك المميز لتجاوز متطلبات المفتاح.", color = Color.LightGray, fontSize = 10.sp)
                                 }
                             }
                         }
@@ -1021,7 +977,7 @@ fun DashboardTab(
                             placeholder = { Text("AIzaSy...", color = Color.Gray) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -1029,7 +985,7 @@ fun DashboardTab(
                             singleLine = true,
                             trailingIcon = {
                                 IconButton(onClick = { viewModel.saveCustomApiKey(apiKeyValue) }) {
-                                    Icon(Icons.Default.Check, contentDescription = "حفظ المفتاح", tint = Color(0xFF10B981))
+                                    Icon(Icons.Default.Check, contentDescription = "حفظ", tint = Color(0xFF10B981))
                                 }
                             }
                         )
@@ -1038,10 +994,10 @@ fun DashboardTab(
                     Divider(color = Color.Gray.copy(alpha = 0.2f))
 
                     Text(
-                        text = "💬 استشارات الأمن السيبراني والأتمتة الحية:",
+                        text = "💬 استشارات الأمن وتزييف البصمات:",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
+                        color = Color(0xFF4CAF50)
                     )
 
                     // Chat messages window
@@ -1057,7 +1013,7 @@ fun DashboardTab(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(180.dp)
+                            .height(160.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(BackgroundDark.copy(alpha = 0.8f))
                             .padding(8.dp)
@@ -1083,7 +1039,7 @@ fun DashboardTab(
                                                 )
                                             )
                                             .background(
-                                                if (msg.isUser) Color(0xFF1E3A8A) else Color(0xFF334155)
+                                                if (msg.isUser) Color(0xFF1E6B38) else Color(0xFF253D30)
                                             )
                                             .padding(horizontal = 12.dp, vertical = 8.dp)
                                     ) {
@@ -1109,10 +1065,10 @@ fun DashboardTab(
                         OutlinedTextField(
                             value = viewModel.chatInput,
                             onValueChange = { viewModel.chatInput = it },
-                            placeholder = { Text("اسأل المستشار عن جدران الحماية، بصمة Canvas...", color = Color.Gray, fontSize = 11.sp) },
+                            placeholder = { Text("اسأل عن بصمة الكانفاس، جدار الحماية...", color = Color.Gray, fontSize = 11.sp) },
                             modifier = Modifier.weight(1f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -1125,7 +1081,7 @@ fun DashboardTab(
                             onClick = { viewModel.sendChatMessage() },
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (viewModel.chatInput.isNotBlank()) PrimaryBlue else Color.Gray.copy(alpha = 0.5f)),
+                                .background(if (viewModel.chatInput.isNotBlank()) Color(0xFF4CAF50) else Color.Gray.copy(alpha = 0.5f)),
                             enabled = viewModel.chatInput.isNotBlank() && !viewModel.isAiResponding
                         ) {
                             if (viewModel.isAiResponding) {
@@ -1159,13 +1115,13 @@ fun DashboardTab(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = " تغذية خطة الاستكشاف الموجهة",
+                        text = "🎯 تغذية خطة الاستعلامات الموجهة",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = PrimaryBlue
+                        color = Color(0xFF4CAF50)
                     )
                     Text(
-                        text = "أدخل الكلمة المفتاحية الاستراتيجية أو الموضوع الهادف. سيقوم الذكاء الاصطناعي بنشره وتوسعته إلى 8 طرق استعلام وصيغ مختلفة لتغطية التصفح الشامل.",
+                        text = "أدخل كلمة بحث أو موضوع معين، وسيتولى الذكاء الاصطناعي توسعتها إلى 8 مسارات بحثية معقدة وممنهجة تلقائياً لتغطية كامل جوانب المحتوى الموجه.",
                         fontSize = 12.sp,
                         color = Color.LightGray
                     )
@@ -1173,10 +1129,10 @@ fun DashboardTab(
                     OutlinedTextField(
                         value = viewModel.topicInput,
                         onValueChange = { viewModel.topicInput = it },
-                        placeholder = { Text("مثال: الذكاء الاصطناعي في تمييز الأورام الطبية") },
+                        placeholder = { Text("مثال: ثورة الأمن السيبراني في السحابة") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
+                            focusedBorderColor = Color(0xFF4CAF50),
                             unfocusedBorderColor = Color.Gray,
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White
@@ -1187,7 +1143,7 @@ fun DashboardTab(
 
                     Button(
                         onClick = { viewModel.submitWeeklyTopic() },
-                        colors = ButtonDefaults.buttonColors(containerColor = SecondaryBlue),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         modifier = Modifier.fillMaxWidth(),
                         enabled = viewModel.topicInput.isNotBlank() && !viewModel.isGeneratingQueries
                     ) {
@@ -1198,7 +1154,7 @@ fun DashboardTab(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("جاري توليد الاستعلامات الذكية...")
+                            Text("جاري إنشاء صيغ الاستعلام الذكية...")
                         } else {
                             Text("توليد وتخصيص دورة 8 استعلامات ✨")
                         }
@@ -1225,9 +1181,9 @@ fun DashboardTab(
                         ) {
                             Column {
                                 Text(
-                                    text = "الموضوع الاسترشادي للمرحلة الحالية",
+                                    text = "الموضوع النشط الحالي:",
                                     fontSize = 11.sp,
-                                    color = PrimaryBlue
+                                    color = Color(0xFF4CAF50)
                                 )
                                 Text(
                                     text = activeTopic.topicText,
@@ -1237,20 +1193,19 @@ fun DashboardTab(
                                 )
                             }
                             IconButton(onClick = { viewModel.deleteWeeklyTopic(activeTopic.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "حذف الموضوع", tint = Color(0xFFEF4444))
+                                Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFEF4444))
                             }
                         }
 
                         Divider(color = Color.Gray.copy(alpha = 0.3f))
 
                         Text(
-                            text = "صيغ وطرق البحث الثمانية المفعلة (مستقلة وتلقائية):",
+                            text = "صيغ البحث الثمانية المفعلة للتدوير التلقائي:",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.LightGray
                         )
 
-                        // Queries list in plan
                         queries.forEachIndexed { idx, q ->
                             Row(
                                 modifier = Modifier
@@ -1270,7 +1225,7 @@ fun DashboardTab(
                                         modifier = Modifier
                                             .size(22.dp)
                                             .clip(CircleShape)
-                                            .background(SecondaryBlue),
+                                            .background(Color(0xFF1E6B38)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
@@ -1289,30 +1244,20 @@ fun DashboardTab(
                                             maxLines = 1
                                         )
                                         Text(
-                                            text = when (q.methodType) {
-                                                "STANDARD" -> "قاعدي عام (Direct Basic)"
-                                                "COMPARISON" -> "مقارنة ودراسة منافسين (Comparison Matrix)"
-                                                "SYNONYMS" -> "تنصيفات ومرادفات بديلة (Semantic Term)"
-                                                "SCHOLARLY" -> "تصفح علمي وأكاديمي (Research Scholarly)"
-                                                "TRENDS" -> "بروز واتجاهات تقنية (Temporal Trends)"
-                                                "CRITIQUE" -> "عثرات ونقد التكنولوجيا (Risk & Critique)"
-                                                "CASE_STUDY" -> "تحقيق ودراسة حالة (Practical Case)"
-                                                "FUTURE" -> "تحليل وتطلعات 2030 (Future Forecast)"
-                                                else -> q.methodType
-                                            },
+                                            text = q.methodType,
                                             fontSize = 10.sp,
-                                            color = PrimaryBlue
+                                            color = Color(0xFF4CAF50)
                                         )
                                     }
                                 }
 
                                 IconButton(onClick = { viewModel.deleteQuery(q.id) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "حذف الاستعلام", modifier = Modifier.size(16.dp), tint = Color.Gray)
+                                    Icon(Icons.Default.Delete, contentDescription = "مسح", modifier = Modifier.size(16.dp), tint = Color.Gray)
                                 }
                             }
                         }
 
-                        // Search Engine Selection Dropdown/Row
+                        // Search Engine
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1322,10 +1267,10 @@ fun DashboardTab(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "🌐 محرك البحث المستهدف:",
+                                text = "🌐 محرك البحث المستهدف للتشغيل:",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = PrimaryBlue
+                                color = Color(0xFF4CAF50)
                             )
                             
                             var expandedEngine by remember { mutableStateOf(false) }
@@ -1344,19 +1289,12 @@ fun DashboardTab(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = when (viewModel.selectedEngineName) {
-                                                "Auto" -> "تدوير تلقائي ذكي لجميع المحركات 🌀"
-                                                else -> "محرك بحث مخصص: ${viewModel.selectedEngineName} 🔍"
-                                            },
+                                            text = if (viewModel.selectedEngineName == "Auto") "تدوير تلقائي ذكي لجميع المحركات 🌀" else "محرك بحث مخصص: ${viewModel.selectedEngineName} 🔍",
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
                                         )
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = "Dropdown",
-                                            tint = Color.White
-                                        )
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Drop", tint = Color.White)
                                     }
                                 }
                                 DropdownMenu(
@@ -1366,18 +1304,11 @@ fun DashboardTab(
                                         .fillMaxWidth(0.9f)
                                         .background(SurfaceDark)
                                 ) {
-                                    val engines = listOf("Auto", "Google", "Bing", "DuckDuckGo", "Yahoo", "Baidu", "Yandex", "Ask", "Ecosia")
+                                    val engines = listOf("Auto", "Google", "Bing", "DuckDuckGo", "Yahoo", "Baidu", "Yandex")
                                     engines.forEach { eng ->
                                         DropdownMenuItem(
                                             text = {
-                                                Text(
-                                                    text = when (eng) {
-                                                        "Auto" -> "🌀 تدوير تلقائي (Auto-Rotate All)"
-                                                        else -> "🔍 $eng"
-                                                    },
-                                                    color = Color.White,
-                                                    fontSize = 13.sp
-                                                )
+                                                Text(text = if (eng == "Auto") "🌀 تدوير تلقائي (Auto-Rotate)" else "🔍 $eng", color = Color.White, fontSize = 13.sp)
                                             },
                                             onClick = {
                                                 viewModel.selectedEngineName = eng
@@ -1389,7 +1320,7 @@ fun DashboardTab(
                             }
                         }
 
-                        // Start Live autopilot sandbox trigger
+                        // Start Live autopilot
                         Button(
                             onClick = onStartAutopilot,
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
@@ -1397,9 +1328,9 @@ fun DashboardTab(
                                 .fillMaxWidth()
                                 .height(48.dp)
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start autopilot")
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Start")
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("بدء تشغيل الأتمتة والبحث الحي الآن 🤖")
+                            Text("بدء تشغيل الأتمتة والبحث المباشر الآن 🤖")
                         }
                     }
                 }
@@ -1422,12 +1353,12 @@ fun DashboardTab(
                     ) {
                         Icon(Icons.Default.Search, contentDescription = "Empty", modifier = Modifier.size(48.dp), tint = Color.Gray)
                         Text(
-                            text = "بانتظار تذويب موضوع بحث وتغذيته للبدء",
+                            text = "بانتظار تدوين موضوع أو استعلام للبدء",
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray
                         )
                         Text(
-                            text = "اكتب كلمة أولية مفيدة في الأعلى لينطلق نظام التنقيب الذاتي.",
+                            text = "اكتب كلمة بحث أولية بالأعلى وسيقوم النظام بتفصيل دورة الأتمتة الشاملة.",
                             fontSize = 12.sp,
                             color = Color.Gray.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center
@@ -1436,53 +1367,40 @@ fun DashboardTab(
                 }
             }
         }
+    }
+}
 
-        // Custom Query Adder Section
-        if (activeTopic != null) {
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = "➕ إضافة استعلام تصفح يدوي مخصص",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                        OutlinedTextField(
-                            value = viewModel.customQueryInput,
-                            onValueChange = { viewModel.customQueryInput = it },
-                            placeholder = { Text("مثال: عقبات استقرار الأمن الإلكتروني") },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
-                                unfocusedBorderColor = Color.Gray,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            singleLine = true
-                        )
+// Global Profile Application Logic (Desktop Chrome-like Isolation)
+fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
+    if (profile == null) return
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { viewModel.addCustomQuery() },
-                                colors = ButtonDefaults.buttonColors(containerColor = SurfaceCard),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("تأكيد وحفظ الاستعلام", fontSize = 12.sp)
-                            }
-                        }
-                    }
-                }
-            }
+    // Set UA
+    webView.settings.userAgentString = profile.userAgent
+    webView.settings.javaScriptEnabled = true
+    webView.settings.domStorageEnabled = true
+    webView.settings.databaseEnabled = true
+
+    // Apply multi-profile isolation if supported on runtime device
+    if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.MULTI_PROFILE)) {
+        try {
+            val profileStore = androidx.webkit.ProfileStore.getInstance()
+            profileStore.getOrCreateProfile(profile.dataSuffix)
+            androidx.webkit.WebViewCompat.setProfile(webView, profile.dataSuffix)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+    } else {
+        // Fallback: Clear/isolate dynamically on switch to prevent contamination
+        try {
+            val cookieManager = android.webkit.CookieManager.getInstance()
+            cookieManager.removeAllCookies(null)
+            cookieManager.flush()
+            webView.clearCache(true)
+            webView.clearFormData()
+            webView.clearHistory()
+            android.webkit.WebStorage.getInstance().deleteAllData()
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 }
@@ -1520,7 +1438,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
         (function() {
             console.log("🛡️ Anti-Detect Shield Activated: ${profile?.name ?: "Default"}");
             
-            // 1. Spoof Navigator Properties (Multilogin / AdsPower Style)
+            // 1. Spoof Navigator Properties
             try {
                 Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => $cores, configurable: true });
                 Object.defineProperty(navigator, 'deviceMemory', { get: () => $ram, configurable: true });
@@ -1530,7 +1448,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 Object.defineProperty(navigator, 'language', { get: () => "${language.split(",")[0]}", configurable: true });
             } catch(e) { console.error("Error spoofing navigator:", e); }
 
-            // 2. Screen Resolution Spoofing (Incogniton Style)
+            // 2. Screen Resolution Spoofing
             try {
                 Object.defineProperty(screen, 'width', { get: () => $w, configurable: true });
                 Object.defineProperty(screen, 'height', { get: () => $h, configurable: true });
@@ -1538,7 +1456,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 Object.defineProperty(screen, 'availHeight', { get: () => $h, configurable: true });
             } catch(e) {}
 
-            // 3. WebRTC Protection (Dolphin{anty} / Multilogin Style)
+            // 3. WebRTC Protection
             if ("$rtcSpoof" === "BLOCK") {
                 try {
                     delete window.RTCPeerConnection;
@@ -1559,7 +1477,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 4. Geolocation Spoofing (Incogniton Style)
+            // 4. Geolocation Spoofing
             if ("$geoSpoof" === "BLOCK") {
                 try {
                     navigator.geolocation.getCurrentPosition = function(success, error) {
@@ -1589,7 +1507,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 5. Timezone Spoofing (Multilogin Style)
+            // 5. Timezone Spoofing
             if ("$timezoneSpoof" === "CUSTOM" || "$timezoneSpoof" === "AUTO") {
                 try {
                     const resolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
@@ -1601,17 +1519,16 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 6. Canvas cryptographic noise spoofing (AdsPower / Ghost Browser Style)
+            // 6. Canvas cryptographic noise spoofing
             if ($canvasNoise) {
                 try {
                     const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
                     HTMLCanvasElement.prototype.toDataURL = function(type, encoderOptions) {
                         const ctx = this.getContext('2d');
                         if (ctx) {
-                            // Inject minor pixel shift noise to modify canvas cryptographic hash
                             const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10) || 1, Math.min(this.height, 10) || 1);
                             if (imgData.data.length > 0) {
-                                imgData.data[0] = (imgData.data[0] + 1) % 256; // modify R channel slightly
+                                imgData.data[0] = (imgData.data[0] + 1) % 256;
                                 ctx.putImageData(imgData, 0, 0);
                             }
                         }
@@ -1620,12 +1537,11 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 7. WebGL Fingerprint Spoofing (AdsPower / Dolphin{anty} Style)
+            // 7. WebGL Fingerprint Spoofing
             if ($webGlNoise) {
                 try {
                     const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
                     WebGLRenderingContext.prototype.getParameter = function(pname) {
-                        // UNMASKED_VENDOR_WEBGL or UNMASKED_RENDERER_WEBGL spoofing
                         if (pname === 37445) return "Intel Open Source Technology Center";
                         if (pname === 37446) return "Mesa DRI Intel(R) HD Graphics (Skylake GT2)";
                         return originalGetParameter.call(this, pname);
@@ -1641,13 +1557,12 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 8. AudioContext Spoofing (Incogniton Style)
+            // 8. AudioContext Spoofing
             if ($audioNoise) {
                 try {
                     const originalGetChannelData = AudioBuffer.prototype.getChannelData;
                     AudioBuffer.prototype.getChannelData = function(channel) {
                         const data = originalGetChannelData.call(this, channel);
-                        // Inject microscopic float precision noise to modify audio context hash
                         for (let i = 0; i < Math.min(data.length, 10); i++) {
                             data[i] += 0.0000001 * Math.sin(i);
                         }
@@ -1656,14 +1571,13 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 9. ClientRects Fingerprinting Defender (SessionBox Style)
+            // 9. ClientRects Fingerprinting Defender
             if ($rectsNoise) {
                 try {
                     const originalGetClientRects = Element.prototype.getClientRects;
                     Element.prototype.getClientRects = function() {
                         const rects = originalGetClientRects.call(this);
                         if (rects && rects.length > 0) {
-                            // Introduce tiny layouts fractions variations
                             rects[0].width += 0.0001;
                             rects[0].height += 0.0001;
                         }
@@ -1678,28 +1592,16 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
 @Composable
 fun AutopilotTab(
     viewModel: MainViewModel,
-    activeTopic: WeeklyTopic?,
-    terminalLogs: List<String>,
     defaultProfile: BrowserProfile?,
     onWebViewCreated: (WebView) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val terminalListState = rememberLazyListState()
-
-    // Automatically follow bottom on log entries
-    LaunchedEffect(terminalLogs.size) {
-        if (terminalLogs.isNotEmpty()) {
-            terminalListState.animateScrollToItem(terminalLogs.size - 1)
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Automation Sandbox Dashboard
+        // Automation Sandbox Status Header Card
         Card(
             colors = CardDefaults.cardColors(containerColor = SurfaceDark),
             modifier = Modifier.fillMaxWidth()
@@ -1713,22 +1615,29 @@ fun AutopilotTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "🔬 قمرة أتمتة الاستكشاف المباشر",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Active", tint = Color(0xFF4CAF50))
+                        Text(
+                            text = "مرصد تصفح الويب المباشر 🔬",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
 
                     if (viewModel.isAutomationRunning) {
                         Button(
                             onClick = { viewModel.stopLiveAutomation() },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(Icons.Default.Refresh, contentDescription = "Stop", modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("إيقاف دوري", fontSize = 11.sp)
+                            Text("إيقاف دورة الأتمتة", fontSize = 11.sp)
                         }
                     }
                 }
@@ -1743,9 +1652,9 @@ fun AutopilotTab(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "الاستعلام النشط (${viewModel.activeAutomationQueryIndex + 1} من 8):",
+                            text = "الاستعلام النشط حالياً (${viewModel.activeAutomationQueryIndex + 1} من 8):",
                             fontSize = 11.sp,
-                            color = PrimaryBlue
+                            color = Color(0xFF4CAF50)
                         )
                         Text(
                             text = viewModel.activeAutomationQueryText,
@@ -1759,13 +1668,13 @@ fun AutopilotTab(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.Gray)
-                            Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.LightGray)
+                            Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 } else {
                     Text(
-                        text = "لا توجد أتمتة حية جارية حالياً. اضغط على تشغيل في 'الرئيسية' للبدء والاستمتاع بالمحاكة البصرية.",
+                        text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. انتقل إلى 'بينج اليوم' لبدء تشغيل دورة البحث المباشرة وعرض محاكاة السلوك البشري.",
                         fontSize = 12.sp,
                         color = Color.LightGray
                     )
@@ -1773,141 +1682,308 @@ fun AutopilotTab(
             }
         }
 
-        Row(
+        // Live Web Client Render Sandbox (WebView) - takes 100% full screen of remaining space!
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.2f)),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            // Live Web Client Render Sandbox (WebView)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                modifier = Modifier
-                    .weight(1.2f)
-                    .fillMaxHeight(),
-                border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.2f))
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(SurfaceCard)
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFEF4444)))
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFBBF24)))
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF34D399)))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "نافذة المتصفح المحمي وعزل الهويات الكلي",
+                        fontSize = 11.sp,
+                        color = Color.LightGray,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                }
+
+                AndroidView(
+                    factory = { context ->
+                        try {
+                            WebView(context).apply {
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                settings.loadWithOverviewMode = true
+                                settings.useWideViewPort = true
+                                webViewClient = object : WebViewClient() {
+                                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                        super.onPageStarted(view, url, favicon)
+                                        val js = generateAntiFingerprintScript(defaultProfile)
+                                        view?.evaluateJavascript(js, null)
+                                    }
+
+                                    override fun onPageFinished(view: WebView?, url: String?) {
+                                        super.onPageFinished(view, url)
+                                        val js = generateAntiFingerprintScript(defaultProfile)
+                                        view?.evaluateJavascript(js, null)
+                                    }
+                                }
+
+                                // Apply secure isolated browser profile
+                                applyProfileToWebView(this, defaultProfile)
+
+                                onWebViewCreated(this)
+                                loadUrl("https://www.bing.com")
+                            }
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                            android.widget.TextView(context).apply {
+                                text = "🔒 وضع المحاكاة الخلفي الآمن نشط\nيتم تنفيذ عمليات البحث وتفتيش المواقع بنجاح دون الحاجة لمتصفح مرئي ثقيل لمنع أي تعارض."
+                                textSize = 12f
+                                setTextColor(android.graphics.Color.LTGRAY)
+                                setPadding(24, 24, 24, 24)
+                                gravity = android.view.Gravity.CENTER
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+}
+
+// Dedicated Operations & Command Center Terminal Tab (Static & Solid without overlap)
+@Composable
+fun TerminalTab(
+    viewModel: MainViewModel,
+    terminalLogs: List<String>,
+    logs: List<AutomationLog>
+) {
+    val terminalListState = rememberLazyListState()
+
+    // Follow scrolling bottom on new logs
+    LaunchedEffect(terminalLogs.size) {
+        if (terminalLogs.isNotEmpty()) {
+            terminalListState.animateScrollToItem(terminalLogs.size - 1)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Live Rolling Console Log panel (Upper Area)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF020704)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1.3f)
+                .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(SurfaceCard)
-                            .padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFEF4444))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFBBF24))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF34D399))
-                        )
+                        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFEF4444)))
+                        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFBBF24)))
+                        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF34D399)))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "مرصد المتصفح المخصص المُموه",
-                            fontSize = 11.sp,
-                            color = Color.LightGray,
+                            text = "📟 موجه عمليات الأتمتة المباشر (Bango Terminal)",
+                            color = Color(0xFF4CAF50),
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            fontSize = 13.sp
                         )
                     }
 
-                    AndroidView(
-                        factory = { context ->
-                            try {
-                                WebView(context).apply {
-                                    settings.javaScriptEnabled = true
-                                    settings.domStorageEnabled = true
-                                    settings.loadWithOverviewMode = true
-                                    settings.useWideViewPort = true
-                                    webViewClient = object : WebViewClient() {
-                                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                                            super.onPageStarted(view, url, favicon)
-                                            val js = generateAntiFingerprintScript(defaultProfile)
-                                            view?.evaluateJavascript(js, null)
-                                        }
+                    if (terminalLogs.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.rollingTerminalLogs.value = emptyList() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Clear", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
 
-                                        override fun onPageFinished(view: WebView?, url: String?) {
-                                            super.onPageFinished(view, url)
-                                            val js = generateAntiFingerprintScript(defaultProfile)
-                                            view?.evaluateJavascript(js, null)
-                                        }
-                                    }
-                                    onWebViewCreated(this)
-                                    loadUrl("https://www.bing.com")
-                                }
-                            } catch (e: Throwable) {
-                                e.printStackTrace()
-                                android.widget.TextView(context).apply {
-                                    text = "🔒 وضع المحاكاة الخلفي الآمن نشط\nيتم تنفيذ عمليات البحث وتفتيش المواقع بنجاح دون الحاجة لمتصفح مرئي ثقيل لمنع أي تعارض."
-                                    textSize = 12f
-                                    setTextColor(android.graphics.Color.LTGRAY)
-                                    setPadding(24, 24, 24, 24)
-                                    gravity = android.view.Gravity.CENTER
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
+                Divider(color = Color(0xFF1E6B38).copy(alpha = 0.3f))
+
+                LazyColumn(
+                    state = terminalListState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (terminalLogs.isEmpty()) {
+                        item {
+                            Text(
+                                "بانتظار انطلاق آلة البحث والتحقيق الآمن لتوثيق الأنشطة الحية هنا...",
+                                color = Color.Gray,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    } else {
+                        items(terminalLogs) { rowLog ->
+                            Text(
+                                text = rowLog,
+                                color = if (rowLog.contains("🔒") || rowLog.contains("✅") || rowLog.contains("🔐")) Color(0xFF10B981) else Color(0xFF4CAF50),
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                lineHeight = 13.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
                 }
             }
+        }
 
-            // Real-time terminal log panel
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF020617)),
-                modifier = Modifier
-                    .weight(0.8f)
-                    .fillMaxHeight(),
-                border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.3f))
+        // Search History Log Card (Lower Area)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "📟 مرسمة العمليات وسيرفر الوكيل",
-                        color = PrimaryBlue,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    )
-                    
-                    Divider(color = PrimaryBlue.copy(alpha = 0.2f))
-
-                    LazyColumn(
-                        state = terminalListState,
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (terminalLogs.isEmpty()) {
-                            item {
-                                Text(
-                                    "بانتظار انطلاق آلة الاستكشاف للبدء بالتوثيق المباشر...",
-                                    color = Color.Gray,
-                                    fontSize = 10.sp,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                        } else {
-                            items(terminalLogs) { rowLog ->
-                                Text(
-                                    text = rowLog,
-                                    color = if (rowLog.contains("🔒") || rowLog.contains("✅")) Color(0xFF10B981) else Color(0xFF38BDF8),
-                                    fontSize = 9.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 11.sp
-                                )
+                        Icon(Icons.Default.List, contentDescription = "History", tint = Color(0xFF4CAF50))
+                        Text(
+                            text = "📊 سجل العمليات والجرود التاريخية",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
+
+                    if (logs.isNotEmpty()) {
+                        Button(
+                            onClick = { viewModel.clearLogs() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f), contentColor = Color(0xFFEF4444)),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Text("تصفير 🗑️", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Divider(color = Color.Gray.copy(alpha = 0.15f))
+
+                if (logs.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(BackgroundDark.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "لا توجد سجلات بحث آلي مخزنة حتى الآن.",
+                            color = Color.Gray,
+                            fontSize = 11.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(logs) { log ->
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = BackgroundDark.copy(alpha = 0.6f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val sdf = java.text.SimpleDateFormat("yyyy/MM/dd HH:mm", java.util.Locale.getDefault())
+                                        Text(
+                                            text = sdf.format(java.util.Date(log.timestamp)),
+                                            fontSize = 10.sp,
+                                            color = Color.Gray
+                                        )
+
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(if (log.status == "SUCCESS") Color(0xFF1B3B2B) else Color(0xFF4C0505))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = if (log.status == "SUCCESS") "مكتمل بنجاح" else "فشل الاتصال",
+                                                fontSize = 9.sp,
+                                                color = if (log.status == "SUCCESS") Color(0xFF10B981) else Color(0xFFEF4444)
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = log.queryText,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "طريقة البحث: ${log.methodType}",
+                                            fontSize = 9.sp,
+                                            color = Color(0xFF4CAF50)
+                                        )
+                                        Text(
+                                            text = "المدة: ${log.durationMs}ms",
+                                            fontSize = 9.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -1934,7 +2010,7 @@ fun ProxiesTab(
                 colors = CardDefaults.cardColors(containerColor = SurfaceDark),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, PrimaryBlue.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
+                    .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
@@ -1953,7 +2029,7 @@ fun ProxiesTab(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "VPN",
-                                tint = PrimaryBlue,
+                                tint = Color(0xFF4CAF50),
                                 modifier = Modifier.size(24.dp)
                             )
                             Column {
@@ -1976,7 +2052,7 @@ fun ProxiesTab(
                             onCheckedChange = { viewModel.toggleBuiltInVpn(it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
-                                checkedTrackColor = PrimaryBlue,
+                                checkedTrackColor = Color(0xFF4CAF50),
                                 uncheckedThumbColor = Color.LightGray,
                                 uncheckedTrackColor = Color.DarkGray
                             )
@@ -1991,7 +2067,6 @@ fun ProxiesTab(
                             color = Color.LightGray
                         )
 
-                        // List of VPN servers as clickable rows or grid
                         viewModel.vpnServers.forEach { server ->
                             val isSelected = viewModel.selectedVpnServerId == server.id
                             Row(
@@ -1999,11 +2074,11 @@ fun ProxiesTab(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
-                                        if (isSelected) PrimaryBlue.copy(alpha = 0.2f) else BackgroundDark.copy(alpha = 0.5f)
+                                        if (isSelected) Color(0xFF1E6B38).copy(alpha = 0.2f) else BackgroundDark.copy(alpha = 0.5f)
                                     )
                                     .border(
                                         1.dp,
-                                        if (isSelected) PrimaryBlue else Color.Transparent,
+                                        if (isSelected) Color(0xFF4CAF50) else Color.Transparent,
                                         RoundedCornerShape(8.dp)
                                     )
                                     .clickable { viewModel.selectVpnServer(server.id) }
@@ -2038,7 +2113,6 @@ fun ProxiesTab(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Green signal indicator dot
                                     Box(
                                         modifier = Modifier
                                             .size(8.dp)
@@ -2063,7 +2137,7 @@ fun ProxiesTab(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "الشبكة المدمجة متوقفة الآن. سيتم الاتصال بالإنترنت بشكل مباشر أو باستخدام البروكسي العام/البروفايل المدخل يدوياً بالأسفل.",
+                                text = "الشبكة المدمجة متوقفة الآن. سيتم التصفح مباشرة أو بالبروكسي المدخل يدوياً.",
                                 fontSize = 11.sp,
                                 color = Color.Gray,
                                 textAlign = TextAlign.Center
@@ -2088,7 +2162,7 @@ fun ProxiesTab(
                         text = "🔒 إضافة سيرفر فك كتم وهوية (Proxy)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = PrimaryBlue
+                        color = Color(0xFF4CAF50)
                     )
 
                     Row(
@@ -2101,7 +2175,7 @@ fun ProxiesTab(
                             placeholder = { Text("عنوان IP") },
                             modifier = Modifier.weight(3f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -2116,7 +2190,7 @@ fun ProxiesTab(
                             modifier = Modifier.weight(1.2f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -2135,7 +2209,7 @@ fun ProxiesTab(
                             placeholder = { Text("الاسم (اختياري)") },
                             modifier = Modifier.weight(2f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -2149,7 +2223,7 @@ fun ProxiesTab(
                             placeholder = { Text("المرور (اختياري)") },
                             modifier = Modifier.weight(2f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -2160,7 +2234,7 @@ fun ProxiesTab(
 
                     Button(
                         onClick = { viewModel.addProxy() },
-                        colors = ButtonDefaults.buttonColors(containerColor = SecondaryBlue),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("حفظ وتوثيق البروكسي في خزانة الهويات 🔒")
@@ -2204,7 +2278,7 @@ fun ProxiesTab(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(SurfaceDark)
-                        .border(1.dp, if (proxy.isActive) PrimaryBlue.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(10.dp))
+                        .border(1.dp, if (proxy.isActive) Color(0xFF4CAF50).copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(10.dp))
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -2251,151 +2325,13 @@ fun ProxiesTab(
                             checked = proxy.isActive,
                             onCheckedChange = { viewModel.toggleProxyActive(proxy) },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = PrimaryBlue,
-                                checkedTrackColor = SecondaryBlue.copy(alpha = 0.5f)
+                                checkedThumbColor = Color(0xFF4CAF50),
+                                checkedTrackColor = Color(0xFF1E6B38).copy(alpha = 0.5f)
                             )
                         )
 
                         IconButton(onClick = { viewModel.deleteProxy(proxy.id) }) {
                             Icon(Icons.Default.Delete, contentDescription = "مسح", tint = Color.Gray)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LogsTab(
-    viewModel: MainViewModel,
-    logs: List<AutomationLog>
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "📊 تقارير الاستكشاف والجرود التاريخية",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = Color.White
-            )
-
-            Button(
-                onClick = { viewModel.clearLogs() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-            ) {
-                Text("تصفير السجلات 🗑️", fontSize = 11.sp)
-            }
-        }
-
-        if (logs.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceDark),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "لا توجد سجلات بحث آلي مخزنة حتى الآن.",
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(logs) { log ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val sdf = java.text.SimpleDateFormat("yyyy/MM/dd HH:mm", java.util.Locale.getDefault())
-                                Text(
-                                    text = sdf.format(java.util.Date(log.timestamp)),
-                                    fontSize = 11.sp,
-                                    color = Color.Gray
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(if (log.status == "SUCCESS") Color(0xFF1B3B2B) else Color(0xFF4C0505))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (log.status == "SUCCESS") "مكتمل بنجاح" else "فشل الاتصال",
-                                        fontSize = 10.sp,
-                                        color = if (log.status == "SUCCESS") Color(0xFF10B981) else Color(0xFFEF4444)
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = log.queryText,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 13.sp
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "طريقة البحث: ${log.methodType}",
-                                    fontSize = 10.sp,
-                                    color = PrimaryBlue
-                                )
-                                Text(
-                                    text = "المدة: ${log.durationMs}ms",
-                                    fontSize = 11.sp,
-                                    color = Color.Gray
-                                )
-                            }
-
-                            Divider(color = Color.Gray.copy(alpha = 0.15f))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "البروكسي المستعمل: ${log.proxyUsed}",
-                                    fontSize = 10.sp,
-                                    color = Color.LightGray,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            Text(
-                                text = "ملخص الرد: ${log.responseSummary}",
-                                fontSize = 10.sp,
-                                color = Color.LightGray.copy(alpha = 0.7f)
-                            )
                         }
                     }
                 }
@@ -2433,7 +2369,7 @@ fun ProfilesTab(
                         text = "👤 إدارة بروفايلات التخفي وعزل البصمات (Anti-Detect)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = PrimaryBlue
+                        color = Color(0xFF4CAF50)
                     )
                     Text(
                         text = "على غرار برامج AdsPower و Dolphin{anty}، يمنحك كل بروفايل هنا حاوية منعزلة تماماً (Sandbox) بملفات تعريف ارتباط (Cookies) منعزلة، وذاكرة تخزين محلية خاصة، وبصمة تصفح (User-Agent) مميزة وبروكسي مخصص لمنع المنصات من ربط حساباتك أو تعقب جهازك الحقيقي.",
@@ -2444,7 +2380,7 @@ fun ProfilesTab(
                     
                     Button(
                         onClick = { showAddForm = !showAddForm },
-                        colors = ButtonDefaults.buttonColors(containerColor = if (showAddForm) Color.Gray else SecondaryBlue),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (showAddForm) Color.Gray else Color(0xFF1E6B38)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(if (showAddForm) "إغلاق نافذة الإضافة ✖" else "إنشاء بروفايل تخفي جديد ➕")
@@ -2480,10 +2416,10 @@ fun ProfilesTab(
                                 value = viewModel.profileNameInput,
                                 onValueChange = { viewModel.profileNameInput = it },
                                 label = { Text("اسم البروفايل") },
-                                placeholder = { Text("مثال: بروفايل فيسبوك 1") },
+                                placeholder = { Text("Facebook_Profile_1") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2494,10 +2430,10 @@ fun ProfilesTab(
                                 value = viewModel.profileTagInput,
                                 onValueChange = { viewModel.profileTagInput = it },
                                 label = { Text("العلامة / التصنيف") },
-                                placeholder = { Text("مثال: فيسبوك") },
+                                placeholder = { Text("تسويق") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2520,10 +2456,9 @@ fun ProfilesTab(
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isSelected) PrimaryBlue else SurfaceDark)
+                                            .background(if (isSelected) Color(0xFF1E6B38) else SurfaceDark)
                                             .clickable {
                                                 viewModel.profilePlatformInput = plat
-                                                // Automatically suggest user-agent based on platform
                                                 viewModel.profileUserAgentInput = when (plat) {
                                                     "Windows" -> "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
                                                     "macOS" -> "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
@@ -2548,7 +2483,7 @@ fun ProfilesTab(
                             label = { Text("معرّف البصمة (User-Agent)") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
+                                focusedBorderColor = Color(0xFF4CAF50),
                                 unfocusedBorderColor = Color.Gray,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -2557,8 +2492,8 @@ fun ProfilesTab(
                             textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp)
                         )
 
-                        // Proxy settings for this profile
-                        Text("🛡 بروكسي مخصص للملف التعريفي (اختياري):", fontSize = 11.sp, color = PrimaryBlue)
+                        // Proxy settings
+                        Text("🛡 بروكسي مخصص للهوية (اختياري):", fontSize = 11.sp, color = Color(0xFF4CAF50))
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -2567,10 +2502,10 @@ fun ProfilesTab(
                                 value = viewModel.profileProxyHostInput,
                                 onValueChange = { viewModel.profileProxyHostInput = it },
                                 label = { Text("الخادم (Proxy Host)") },
-                                placeholder = { Text("مثال: 185.23.4.1") },
+                                placeholder = { Text("185.23.4.1") },
                                 modifier = Modifier.weight(2f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2584,7 +2519,7 @@ fun ProfilesTab(
                                 placeholder = { Text("8080") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2604,7 +2539,7 @@ fun ProfilesTab(
                                 label = { Text("اسم المستخدم") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2617,40 +2552,7 @@ fun ProfilesTab(
                                 label = { Text("كلمة المرور") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
-                                    unfocusedBorderColor = Color.Gray,
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                ),
-                                singleLine = true
-                            )
-                        }
-
-                        // Advanced Options: Language and Resolution
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = viewModel.profileLanguageInput,
-                                onValueChange = { viewModel.profileLanguageInput = it },
-                                label = { Text("اللغة المحاكاة") },
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
-                                    unfocusedBorderColor = Color.Gray,
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                ),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = viewModel.profileResolutionInput,
-                                onValueChange = { viewModel.profileResolutionInput = it },
-                                label = { Text("دقة الشاشة") },
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PrimaryBlue,
+                                    focusedBorderColor = Color(0xFF4CAF50),
                                     unfocusedBorderColor = Color.Gray,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White
@@ -2664,7 +2566,7 @@ fun ProfilesTab(
                         Card(
                             colors = CardDefaults.cardColors(containerColor = SurfaceDark),
                             modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(0.5.dp, if (showAdvancedConfig) PrimaryBlue else Color.Gray.copy(alpha = 0.5f))
+                            border = BorderStroke(0.5.dp, if (showAdvancedConfig) Color(0xFF4CAF50) else Color.Gray.copy(alpha = 0.5f))
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Row(
@@ -2675,23 +2577,22 @@ fun ProfilesTab(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "🛡️ بصمات الأمن السيبراني المتقدمة (أقوى من AdsPower & Dolphin)",
+                                        text = "🛡️ بصمات الأمن السيبراني المتقدمة",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (showAdvancedConfig) PrimaryBlue else Color.White
+                                        color = if (showAdvancedConfig) Color(0xFF4CAF50) else Color.White
                                     )
                                     Text(
                                         text = if (showAdvancedConfig) "إخفاء ▲" else "عرض وتخصيص ▼",
                                         fontSize = 10.sp,
-                                        color = PrimaryBlue
+                                        color = Color(0xFF4CAF50)
                                     )
                                 }
                                 
                                 if (showAdvancedConfig) {
                                     Spacer(modifier = Modifier.height(12.dp))
                                     
-                                    // 1. Core Hardware Emulation (CPU Cores & RAM)
-                                    Text("🔧 محاكاة عتاد الجهاز الحقيقي:", fontSize = 11.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                                    Text("🔧 محاكاة عتاد الجهاز الحقيقي:", fontSize = 11.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -2704,7 +2605,7 @@ fun ProfilesTab(
                                             placeholder = { Text("8") },
                                             modifier = Modifier.weight(1f),
                                             colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = PrimaryBlue,
+                                                focusedBorderColor = Color(0xFF4CAF50),
                                                 unfocusedBorderColor = Color.Gray,
                                                 focusedTextColor = Color.White,
                                                 unfocusedTextColor = Color.White
@@ -2714,11 +2615,11 @@ fun ProfilesTab(
                                         OutlinedTextField(
                                             value = viewModel.profileDeviceMemory,
                                             onValueChange = { viewModel.profileDeviceMemory = it },
-                                            label = { Text("الذاكرة العشوائية (RAM)") },
+                                            label = { Text("الذاكرة (RAM)") },
                                             placeholder = { Text("8") },
                                             modifier = Modifier.weight(1f),
                                             colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = PrimaryBlue,
+                                                focusedBorderColor = Color(0xFF4CAF50),
                                                 unfocusedBorderColor = Color.Gray,
                                                 focusedTextColor = Color.White,
                                                 unfocusedTextColor = Color.White
@@ -2729,8 +2630,7 @@ fun ProfilesTab(
                                     
                                     Spacer(modifier = Modifier.height(12.dp))
                                     
-                                    // 2. Encryption Toggles (Canvas, WebGL, Audio, Rects)
-                                    Text("🎨 تشويش البصمات الرسومية والبرمجية:", fontSize = 11.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                                    Text("🎨 تشويش البصمات الرسومية:", fontSize = 11.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -2741,7 +2641,7 @@ fun ProfilesTab(
                                                 Checkbox(
                                                     checked = viewModel.profileCanvasSpoof,
                                                     onCheckedChange = { viewModel.profileCanvasSpoof = it },
-                                                    colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+                                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
                                                 )
                                                 Text("تشويش Canvas", fontSize = 11.sp, color = Color.White)
                                             }
@@ -2749,7 +2649,7 @@ fun ProfilesTab(
                                                 Checkbox(
                                                     checked = viewModel.profileWebGlSpoof,
                                                     onCheckedChange = { viewModel.profileWebGlSpoof = it },
-                                                    colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+                                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
                                                 )
                                                 Text("تشويش WebGL", fontSize = 11.sp, color = Color.White)
                                             }
@@ -2759,152 +2659,18 @@ fun ProfilesTab(
                                                 Checkbox(
                                                     checked = viewModel.profileAudioSpoof,
                                                     onCheckedChange = { viewModel.profileAudioSpoof = it },
-                                                    colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+                                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
                                                 )
-                                                Text("تشويش بصمة الصوت", fontSize = 11.sp, color = Color.White)
+                                                Text("تشويش الصوت", fontSize = 11.sp, color = Color.White)
                                             }
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Checkbox(
                                                     checked = viewModel.profileClientRectsSpoof,
                                                     onCheckedChange = { viewModel.profileClientRectsSpoof = it },
-                                                    colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+                                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
                                                 )
-                                                Text("تشويش ClientRects", fontSize = 11.sp, color = Color.White)
+                                                Text("ClientRects", fontSize = 11.sp, color = Color.White)
                                             }
-                                        }
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    
-                                    // 3. WebRTC & Timezone
-                                    Text("🌍 الشبكة والمنطقة الزمنية المحاكية:", fontSize = 11.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("تسريب WebRTC:", fontSize = 10.sp, color = Color.Gray)
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                listOf("BLOCK", "REAL", "CUSTOM").forEach { mode ->
-                                                    val isSelected = viewModel.profileWebRtcSpoof == mode
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .weight(1f)
-                                                            .clip(RoundedCornerShape(4.dp))
-                                                            .background(if (isSelected) PrimaryBlue else SurfaceDark)
-                                                            .clickable { viewModel.profileWebRtcSpoof = mode }
-                                                            .padding(vertical = 4.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Text(mode, fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("المنطقة الزمنية:", fontSize = 10.sp, color = Color.Gray)
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                listOf("AUTO", "UTC", "CUSTOM").forEach { mode ->
-                                                    val isSelected = viewModel.profileTimezoneSpoof == mode
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .weight(1f)
-                                                            .clip(RoundedCornerShape(4.dp))
-                                                            .background(if (isSelected) PrimaryBlue else SurfaceDark)
-                                                            .clickable { viewModel.profileTimezoneSpoof = mode }
-                                                            .padding(vertical = 4.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Text(mode, fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (viewModel.profileTimezoneSpoof == "CUSTOM") {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        OutlinedTextField(
-                                            value = viewModel.profileCustomTimezone,
-                                            onValueChange = { viewModel.profileCustomTimezone = it },
-                                            label = { Text("منطقة مخصصة (مثال: Asia/Riyadh)") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = PrimaryBlue,
-                                                unfocusedBorderColor = Color.Gray,
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White
-                                            ),
-                                            singleLine = true
-                                        )
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    
-                                    // 4. Geolocation Config
-                                    Text("📍 محاكاة الموقع الجغرافي (Geolocation):", fontSize = 11.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        listOf("AUTO", "BLOCK", "CUSTOM").forEach { mode ->
-                                            val isSelected = viewModel.profileGeolocationSpoof == mode
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(if (isSelected) PrimaryBlue else SurfaceDark)
-                                                    .clickable { viewModel.profileGeolocationSpoof = mode }
-                                                    .padding(vertical = 6.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = when(mode) {
-                                                        "AUTO" -> "تلقائي محاذاة"
-                                                        "BLOCK" -> "حجب الصلاحية"
-                                                        else -> "إحداثيات مخصصة"
-                                                    },
-                                                    fontSize = 9.sp,
-                                                    color = Color.White,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (viewModel.profileGeolocationSpoof == "CUSTOM") {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            OutlinedTextField(
-                                                value = viewModel.profileCustomLatitude,
-                                                onValueChange = { viewModel.profileCustomLatitude = it },
-                                                label = { Text("خط العرض (Lat)") },
-                                                modifier = Modifier.weight(1f),
-                                                colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedBorderColor = PrimaryBlue,
-                                                    unfocusedBorderColor = Color.Gray,
-                                                    focusedTextColor = Color.White,
-                                                    unfocusedTextColor = Color.White
-                                                ),
-                                                singleLine = true
-                                            )
-                                            OutlinedTextField(
-                                                value = viewModel.profileCustomLongitude,
-                                                onValueChange = { viewModel.profileCustomLongitude = it },
-                                                label = { Text("خط الطول (Lon)") },
-                                                modifier = Modifier.weight(1f),
-                                                colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedBorderColor = PrimaryBlue,
-                                                    unfocusedBorderColor = Color.Gray,
-                                                    focusedTextColor = Color.White,
-                                                    unfocusedTextColor = Color.White
-                                                ),
-                                                singleLine = true
-                                            )
                                         }
                                     }
                                 }
@@ -2920,7 +2686,7 @@ fun ProfilesTab(
                             Checkbox(
                                 checked = viewModel.profileIsDefaultInput,
                                 onCheckedChange = { viewModel.profileIsDefaultInput = it },
-                                colors = CheckboxDefaults.colors(checkedColor = PrimaryBlue)
+                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
                             )
                             Text("تعيين كملف تعريف نشط حالياً فور الإنشاء", color = Color.White, fontSize = 12.sp)
                         }
@@ -2934,7 +2700,7 @@ fun ProfilesTab(
                             modifier = Modifier.fillMaxWidth(),
                             enabled = viewModel.profileNameInput.isNotBlank()
                         ) {
-                            Text("حفظ وبناء الملف التعريفي 💾", fontWeight = FontWeight.Bold)
+                            Text("حفظ وبناء الهوية المشفرة 💾", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -2944,9 +2710,9 @@ fun ProfilesTab(
         // Active Profile Status Indicator
         item {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF161F30)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1E14)),
                 modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.5f))
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -2963,7 +2729,7 @@ fun ProfilesTab(
                         Text(
                             text = "الملف التعريفي النشط حالياً:",
                             fontSize = 11.sp,
-                            color = PrimaryBlue
+                            color = Color(0xFF4CAF50)
                         )
                         Text(
                             text = defaultProfile?.name ?: "البروفايل المالي الآمن (الافتراضي)",
@@ -3013,7 +2779,7 @@ fun ProfilesTab(
                     modifier = Modifier.fillMaxWidth(),
                     border = BorderStroke(
                         width = if (isActive) 1.5.dp else 0.5.dp,
-                        color = if (isActive) Color(0xFF10B981) else Color.Gray.copy(alpha = 0.3f)
+                        color = if (isActive) Color(0xFF4CAF50) else Color.Gray.copy(alpha = 0.3f)
                     )
                 ) {
                     Column(
@@ -3032,10 +2798,10 @@ fun ProfilesTab(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(PrimaryBlue.copy(alpha = 0.2f))
+                                        .background(Color(0xFF4CAF50).copy(alpha = 0.2f))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
-                                    Text(profile.tag, fontSize = 10.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                                    Text(profile.tag, fontSize = 10.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                                 }
                                 Text(
                                     text = profile.name,
@@ -3059,7 +2825,6 @@ fun ProfilesTab(
 
                         Divider(color = Color.Gray.copy(alpha = 0.15f))
 
-                        // Details grid
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("💻 نظام التشغيل:", fontSize = 11.sp, color = Color.Gray)
