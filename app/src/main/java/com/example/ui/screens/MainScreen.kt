@@ -282,6 +282,7 @@ fun MainScreen(
                         1 -> AutopilotTab(
                             viewModel = viewModel,
                             defaultProfile = defaultProfile,
+                            activeWebViewReference = activeWebViewReference,
                             onWebViewCreated = { webView ->
                                 activeWebViewReference = webView
                             }
@@ -1593,8 +1594,13 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
 fun AutopilotTab(
     viewModel: MainViewModel,
     defaultProfile: BrowserProfile?,
+    activeWebViewReference: WebView?,
     onWebViewCreated: (WebView) -> Unit
 ) {
+    var urlInput by remember { mutableStateOf("https://www.bing.com") }
+    var canGoBackState by remember { mutableStateOf(false) }
+    var canGoForwardState by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1674,7 +1680,7 @@ fun AutopilotTab(
                     }
                 } else {
                     Text(
-                        text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. انتقل إلى 'بينج اليوم' لبدء تشغيل دورة البحث المباشرة وعرض محاكاة السلوك البشري.",
+                        text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. يمكنك إدخال أي رابط للتصفح مباشرة أو تشغيل دورة البحث المباشرة من 'بينج اليوم'.",
                         fontSize = 12.sp,
                         color = Color.LightGray
                     )
@@ -1692,24 +1698,107 @@ fun AutopilotTab(
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                // Interactive Address Bar and Navigation Controls Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(SurfaceCard)
-                        .padding(8.dp),
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFEF4444)))
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFBBF24)))
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF34D399)))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "نافذة المتصفح المحمي وعزل الهويات الكلي",
-                        fontSize = 11.sp,
-                        color = Color.LightGray,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                    // Back button
+                    IconButton(
+                        onClick = {
+                            activeWebViewReference?.let { webView ->
+                                if (webView.canGoBack()) {
+                                    webView.goBack()
+                                }
+                            }
+                        },
+                        enabled = canGoBackState,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "السابق",
+                            tint = if (canGoBackState) Color.White else Color.Gray
+                        )
+                    }
+
+                    // Forward button
+                    IconButton(
+                        onClick = {
+                            activeWebViewReference?.let { webView ->
+                                if (webView.canGoForward()) {
+                                    webView.goForward()
+                                }
+                            }
+                        },
+                        enabled = canGoForwardState,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "التالي",
+                            tint = if (canGoForwardState) Color.White else Color.Gray
+                        )
+                    }
+
+                    // Reload button
+                    IconButton(
+                        onClick = {
+                            activeWebViewReference?.reload()
+                        },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "تحديث",
+                            tint = Color.White
+                        )
+                    }
+
+                    // Address Bar Text Field
+                    OutlinedTextField(
+                        value = urlInput,
+                        onValueChange = { urlInput = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4CAF50),
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                            focusedContainerColor = BackgroundDark,
+                            unfocusedContainerColor = BackgroundDark,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        singleLine = true,
+                        placeholder = { Text("أدخل عنوان الموقع (e.g. google.com)", color = Color.Gray, fontSize = 11.sp) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    activeWebViewReference?.let { webView ->
+                                        var targetUrl = urlInput.trim()
+                                        if (targetUrl.isNotEmpty()) {
+                                            if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                                                targetUrl = "https://$targetUrl"
+                                            }
+                                            webView.loadUrl(targetUrl)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "ذهاب",
+                                    tint = Color(0xFF4CAF50)
+                                )
+                            }
+                        }
                     )
                 }
 
@@ -1726,12 +1815,18 @@ fun AutopilotTab(
                                         super.onPageStarted(view, url, favicon)
                                         val js = generateAntiFingerprintScript(defaultProfile)
                                         view?.evaluateJavascript(js, null)
+                                        url?.let { urlInput = it }
+                                        canGoBackState = view?.canGoBack() == true
+                                        canGoForwardState = view?.canGoForward() == true
                                     }
 
                                     override fun onPageFinished(view: WebView?, url: String?) {
                                         super.onPageFinished(view, url)
                                         val js = generateAntiFingerprintScript(defaultProfile)
                                         view?.evaluateJavascript(js, null)
+                                        url?.let { urlInput = it }
+                                        canGoBackState = view?.canGoBack() == true
+                                        canGoForwardState = view?.canGoForward() == true
                                     }
                                 }
 
