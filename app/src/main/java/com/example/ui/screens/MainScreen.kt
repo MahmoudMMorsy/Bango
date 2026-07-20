@@ -68,6 +68,7 @@ fun MainScreen(
     val defaultProfile by viewModel.defaultProfile.collectAsStateWithLifecycle()
 
     var activeWebViewReference by remember { mutableStateOf<WebView?>(null) }
+    var isBrowserFullScreen by remember { mutableStateOf(false) }
 
     // Enforce RTL Layout Direction for beautiful Arabic-first design
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -76,171 +77,175 @@ fun MainScreen(
         } else {
             Scaffold(
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                // Miniature Glowing Bango Logo Badge
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(
-                                            Brush.linearGradient(
-                                                colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
-                                            )
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "B",
-                                        color = Color.White,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Black,
-                                        modifier = Modifier.offset(y = (-1).dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = "برنامج بانجو الآلي v2",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Text(
-                                        text = "متصفح التخفي المطور • أمن وحماية الهوية 🛡️",
-                                        fontSize = 10.sp,
-                                        color = Color.LightGray.copy(alpha = 0.8f)
-                                    )
-                                }
-                            }
-                        },
-                        actions = {
-                            Box(
-                                modifier = Modifier
-                                    .padding(end = 16.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (viewModel.isAutomationRunning) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF1E2F4C))
-                                    .border(1.dp, if (viewModel.isAutomationRunning) Color(0xFF10B981) else Color.Transparent, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
+                    if (!isBrowserFullScreen || viewModel.selectedTab != 1) {
+                        TopAppBar(
+                            title = {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                                    val alpha by infiniteTransition.animateFloat(
-                                        initialValue = 0.3f,
-                                        targetValue = 1f,
-                                        animationSpec = infiniteRepeatable(
-                                            animation = tween(1000, easing = LinearEasing),
-                                            repeatMode = RepeatMode.Reverse
-                                        ),
-                                        label = "pulse"
-                                    )
-
-                                    if (viewModel.isAutomationRunning) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .drawBehind {
-                                                    drawCircle(
-                                                        color = Color(0xFF10B981),
-                                                        alpha = alpha
-                                                    )
-                                                }
+                                    // Miniature Glowing Bango Logo Badge
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "B",
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Black,
+                                            modifier = Modifier.offset(y = (-1).dp)
                                         )
-                                        Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .clip(CircleShape)
-                                                .background(Color.Gray)
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "برنامج بانجو الآلي v2",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
                                         )
-                                        Text("مستعد للخمول", fontSize = 11.sp, color = Color.Gray)
+                                        Text(
+                                            text = "متصفح التخفي المطور • أمن وحماية الهوية 🛡️",
+                                            fontSize = 10.sp,
+                                            color = Color.LightGray.copy(alpha = 0.8f)
+                                        )
                                     }
                                 }
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = SurfaceDark
+                            },
+                            actions = {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(end = 16.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (viewModel.isAutomationRunning) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF1E2F4C))
+                                        .border(1.dp, if (viewModel.isAutomationRunning) Color(0xFF10B981) else Color.Transparent, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                                        val alpha by infiniteTransition.animateFloat(
+                                            initialValue = 0.3f,
+                                            targetValue = 1f,
+                                            animationSpec = infiniteRepeatable(
+                                                animation = tween(1000, easing = LinearEasing),
+                                                repeatMode = RepeatMode.Reverse
+                                            ),
+                                            label = "pulse"
+                                        )
+
+                                        if (viewModel.isAutomationRunning) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(8.dp)
+                                                    .drawBehind {
+                                                        drawCircle(
+                                                            color = Color(0xFF10B981),
+                                                            alpha = alpha
+                                                        )
+                                                    }
+                                            )
+                                            Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(8.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.Gray)
+                                            )
+                                            Text("مستعد للخمول", fontSize = 11.sp, color = Color.Gray)
+                                        }
+                                    }
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = SurfaceDark
+                            )
                         )
-                    )
+                    }
                 },
                 bottomBar = {
-                    NavigationBar(
-                        containerColor = SurfaceDark,
-                        tonalElevation = 8.dp
-                    ) {
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 0,
-                            onClick = { viewModel.selectedTab = 0 },
-                            icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
-                            label = { Text("بينج اليوم") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF4CAF50),
-                                selectedTextColor = Color(0xFF4CAF50),
-                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
+                    if (!isBrowserFullScreen || viewModel.selectedTab != 1) {
+                        NavigationBar(
+                            containerColor = SurfaceDark,
+                            tonalElevation = 8.dp
+                        ) {
+                            NavigationBarItem(
+                                selected = viewModel.selectedTab == 0,
+                                onClick = { viewModel.selectedTab = 0 },
+                                icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
+                                label = { Text("بينج اليوم") },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color(0xFF4CAF50),
+                                    selectedTextColor = Color(0xFF4CAF50),
+                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                    unselectedIconColor = Color.LightGray,
+                                    unselectedTextColor = Color.LightGray
+                                )
                             )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 1,
-                            onClick = { viewModel.selectedTab = 1 },
-                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = "المتصفح") },
-                            label = { Text("المتصفح") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF4CAF50),
-                                selectedTextColor = Color(0xFF4CAF50),
-                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
+                            NavigationBarItem(
+                                selected = viewModel.selectedTab == 1,
+                                onClick = { viewModel.selectedTab = 1 },
+                                icon = { Icon(Icons.Default.PlayArrow, contentDescription = "المتصفح") },
+                                label = { Text("المتصفح") },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color(0xFF4CAF50),
+                                    selectedTextColor = Color(0xFF4CAF50),
+                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                    unselectedIconColor = Color.LightGray,
+                                    unselectedTextColor = Color.LightGray
+                                )
                             )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 2,
-                            onClick = { viewModel.selectedTab = 2 },
-                            icon = { Icon(Icons.Default.Build, contentDescription = "لوحة الأوامر") },
-                            label = { Text("لوحة الأوامر") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF4CAF50),
-                                selectedTextColor = Color(0xFF4CAF50),
-                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
+                            NavigationBarItem(
+                                selected = viewModel.selectedTab == 2,
+                                onClick = { viewModel.selectedTab = 2 },
+                                icon = { Icon(Icons.Default.Build, contentDescription = "لوحة الأوامر") },
+                                label = { Text("لوحة الأوامر") },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color(0xFF4CAF50),
+                                    selectedTextColor = Color(0xFF4CAF50),
+                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                    unselectedIconColor = Color.LightGray,
+                                    unselectedTextColor = Color.LightGray
+                                )
                             )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 3,
-                            onClick = { viewModel.selectedTab = 3 },
-                            icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
-                            label = { Text("الشبكة") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF4CAF50),
-                                selectedTextColor = Color(0xFF4CAF50),
-                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
+                            NavigationBarItem(
+                                selected = viewModel.selectedTab == 3,
+                                onClick = { viewModel.selectedTab = 3 },
+                                icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
+                                label = { Text("الشبكة") },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color(0xFF4CAF50),
+                                    selectedTextColor = Color(0xFF4CAF50),
+                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                    unselectedIconColor = Color.LightGray,
+                                    unselectedTextColor = Color.LightGray
+                                )
                             )
-                        )
-                        NavigationBarItem(
-                            selected = viewModel.selectedTab == 4,
-                            onClick = { viewModel.selectedTab = 4 },
-                            icon = { Icon(Icons.Default.Person, contentDescription = "البروفايلات") },
-                            label = { Text("الهويات") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF4CAF50),
-                                selectedTextColor = Color(0xFF4CAF50),
-                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                unselectedIconColor = Color.LightGray,
-                                unselectedTextColor = Color.LightGray
+                            NavigationBarItem(
+                                selected = viewModel.selectedTab == 4,
+                                onClick = { viewModel.selectedTab = 4 },
+                                icon = { Icon(Icons.Default.Person, contentDescription = "البروفايلات") },
+                                label = { Text("الهويات") },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Color(0xFF4CAF50),
+                                    selectedTextColor = Color(0xFF4CAF50),
+                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                    unselectedIconColor = Color.LightGray,
+                                    unselectedTextColor = Color.LightGray
+                                )
                             )
-                        )
+                        }
                     }
                 },
                 containerColor = BackgroundDark,
@@ -249,7 +254,7 @@ fun MainScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
+                        .padding(if (isBrowserFullScreen && viewModel.selectedTab == 1) PaddingValues(0.dp) else paddingValues)
                 ) {
                     when (viewModel.selectedTab) {
                         0 -> DashboardTab(
@@ -283,6 +288,8 @@ fun MainScreen(
                             viewModel = viewModel,
                             defaultProfile = defaultProfile,
                             activeWebViewReference = activeWebViewReference,
+                            isFullScreen = isBrowserFullScreen,
+                            onFullScreenToggle = { isBrowserFullScreen = !isBrowserFullScreen },
                             onWebViewCreated = { webView ->
                                 activeWebViewReference = webView
                             }
@@ -1595,6 +1602,8 @@ fun AutopilotTab(
     viewModel: MainViewModel,
     defaultProfile: BrowserProfile?,
     activeWebViewReference: WebView?,
+    isFullScreen: Boolean,
+    onFullScreenToggle: () -> Unit,
     onWebViewCreated: (WebView) -> Unit
 ) {
     var urlInput by remember { mutableStateOf("https://www.bing.com") }
@@ -1604,86 +1613,88 @@ fun AutopilotTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(if (isFullScreen) 2.dp else 12.dp),
+        verticalArrangement = Arrangement.spacedBy(if (isFullScreen) 4.dp else 12.dp)
     ) {
-        // Automation Sandbox Status Header Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Automation Sandbox Status Header Card (Hidden when maximized for 100% full screen)
+        if (!isFullScreen) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Active", tint = Color(0xFF4CAF50))
-                        Text(
-                            text = "مرصد تصفح الويب المباشر 🔬",
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Active", tint = Color(0xFF4CAF50))
+                            Text(
+                                text = "مرصد تصفح الويب المباشر 🔬",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        if (viewModel.isAutomationRunning) {
+                            Button(
+                                onClick = { viewModel.stopLiveAutomation() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Stop", modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("إيقاف دورة الأتمتة", fontSize = 11.sp)
+                            }
+                        }
                     }
 
                     if (viewModel.isAutomationRunning) {
-                        Button(
-                            onClick = { viewModel.stopLiveAutomation() },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SurfaceCard)
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Stop", modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("إيقاف دورة الأتمتة", fontSize = 11.sp)
+                            Text(
+                                text = "الاستعلام النشط حالياً (${viewModel.activeAutomationQueryIndex + 1} من 8):",
+                                fontSize = 11.sp,
+                                color = Color(0xFF4CAF50)
+                            )
+                            Text(
+                                text = viewModel.activeAutomationQueryText,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.LightGray)
+                                Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                         }
-                    }
-                }
-
-                if (viewModel.isAutomationRunning) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SurfaceCard)
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
+                    } else {
                         Text(
-                            text = "الاستعلام النشط حالياً (${viewModel.activeAutomationQueryIndex + 1} من 8):",
-                            fontSize = 11.sp,
-                            color = Color(0xFF4CAF50)
+                            text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. يمكنك إدخال أي رابط للتصفح مباشرة أو تشغيل دورة البحث المباشرة من 'بينج اليوم'.",
+                            fontSize = 12.sp,
+                            color = Color.LightGray
                         )
-                        Text(
-                            text = viewModel.activeAutomationQueryText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.LightGray)
-                            Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
                     }
-                } else {
-                    Text(
-                        text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. يمكنك إدخال أي رابط للتصفح مباشرة أو تشغيل دورة البحث المباشرة من 'بينج اليوم'.",
-                        fontSize = 12.sp,
-                        color = Color.LightGray
-                    )
                 }
             }
         }
@@ -1800,6 +1811,19 @@ fun AutopilotTab(
                             }
                         }
                     )
+
+                    // SLEEK FULL SCREEN / MAXIMIZE TOGGLE BUTTON!
+                    IconButton(
+                        onClick = { onFullScreenToggle() },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f), CircleShape)
+                    ) {
+                        Text(
+                            text = if (isFullScreen) "📱" else "🖥️",
+                            fontSize = 18.sp
+                        )
+                    }
                 }
 
                 AndroidView(
@@ -2578,11 +2602,11 @@ fun ProfilesTab(
                             label = { Text("معرّف البصمة (User-Agent)") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF4CAF50),
-                                unfocusedBorderColor = Color.Gray,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
+                                    focusedBorderColor = Color(0xFF4CAF50),
+                                    unfocusedBorderColor = Color.Gray,
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
                             singleLine = true,
                             textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp)
                         )
