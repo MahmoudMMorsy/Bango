@@ -753,8 +753,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val encodedQuery = java.net.URLEncoder.encode(queryObj.queryText, "UTF-8")
                 val targetUrl = "${enginePair.second}$encodedQuery"
 
-                // Load URL inside live UI WebView
-                onNavigateToUrl(targetUrl, userAgent)
+                // Load URL inside ChromeBrowserView active tab (if open), otherwise fallback to the standard automation view
+                val chromeTab = getActiveTab()
+                if (isChromeBrowserOpen && chromeTab != null) {
+                    addTerminalLog("🤖 توجيه الأتمتة المباشرة إلى علامة التبويب المفتوحة للبروفايل...")
+                    chromeTab.url = targetUrl
+                    chromeTab.webView?.let { webView ->
+                        webView.settings.userAgentString = userAgent
+                        webView.loadUrl(targetUrl)
+                        viewModelScope.launch {
+                            try {
+                                delay(1500)
+                                webView.evaluateJavascript("window.scrollBy({ top: 350, behavior: 'smooth' });", null)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                } else {
+                    // Load URL inside live UI WebView (standard fallback)
+                    onNavigateToUrl(targetUrl, userAgent)
+                }
 
                 addTerminalLog("⏳ محاكاة التصفح والتمرير البشري في صفحة محرك البحث...")
                 // Mimic reading / interaction delays (9-12 seconds on screen)

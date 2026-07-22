@@ -559,6 +559,25 @@ fun ChromeBrowserView(
                                     }
                                 )
                                 DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = if (viewModel.isAutomationRunning) "إيقاف الأتمتة التلقائية 🛑" else "تشغيل الأتمتة التلقائية 🤖",
+                                            color = if (viewModel.isAutomationRunning) Color.Yellow else Color(0xFF4CAF50),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        if (viewModel.isAutomationRunning) {
+                                            viewModel.stopLiveAutomation()
+                                        } else {
+                                            viewModel.startLiveAutomation { url, ua ->
+                                                // Automatic dynamic target tab routing is handled internally!
+                                            }
+                                        }
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("مسح ملفات الكوكيز بالكامل", color = Color.White) },
                                     onClick = {
                                         viewModel.clearAllCookiesForActiveProfile()
@@ -2020,11 +2039,29 @@ fun DashboardTab(
 fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
     if (profile == null) return
 
-    // Set UA
+    // Enable high-compatibility browser settings for standard modern websites
     webView.settings.userAgentString = profile.userAgent
     webView.settings.javaScriptEnabled = true
     webView.settings.domStorageEnabled = true
     webView.settings.databaseEnabled = true
+    webView.settings.allowFileAccess = true
+    webView.settings.allowContentAccess = true
+    webView.settings.loadWithOverviewMode = true
+    webView.settings.useWideViewPort = true
+    webView.settings.javaScriptCanOpenWindowsAutomatically = true
+    webView.settings.mediaPlaybackRequiresUserGesture = false
+
+    // Allow loading HTTPS/HTTP mixed content for web compatibility
+    webView.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+    // Explicitly accept cookies and third-party cookies for logging in & compatibility
+    try {
+        val cookieManager = android.webkit.CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
 
     // Apply multi-profile isolation if supported on runtime device
     if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.MULTI_PROFILE)) {
@@ -2032,19 +2069,6 @@ fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
             val profileStore = androidx.webkit.ProfileStore.getInstance()
             profileStore.getOrCreateProfile(profile.dataSuffix)
             androidx.webkit.WebViewCompat.setProfile(webView, profile.dataSuffix)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-    } else {
-        // Fallback: Clear/isolate dynamically on switch to prevent contamination
-        try {
-            val cookieManager = android.webkit.CookieManager.getInstance()
-            cookieManager.removeAllCookies(null)
-            cookieManager.flush()
-            webView.clearCache(true)
-            webView.clearFormData()
-            webView.clearHistory()
-            android.webkit.WebStorage.getInstance().deleteAllData()
         } catch (e: Throwable) {
             e.printStackTrace()
         }
