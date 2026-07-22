@@ -2,6 +2,13 @@ package com.example.ui.screens
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
+import android.webkit.ValueCallback
+import android.webkit.JsResult
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -9,9 +16,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import android.graphics.Bitmap
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -323,6 +335,163 @@ fun ChromeBrowserView(
 
     var menuExpanded by remember { mutableStateOf(false) }
     var addressBarInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
+    var showBookmarksDialog by remember { mutableStateOf(false) }
+
+    // File choosing launcher
+    var uploadMessageCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+    val fileChooserLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data?.data
+            val uris = if (data != null) arrayOf(data) else null
+            uploadMessageCallback?.onReceiveValue(uris)
+        } else {
+            uploadMessageCallback?.onReceiveValue(null)
+        }
+        uploadMessageCallback = null
+    }
+
+    // JS alerts / confirm dialogs
+    var jsAlertMessage by remember { mutableStateOf<String?>(null) }
+    var jsAlertResult by remember { mutableStateOf<JsResult?>(null) }
+    var jsConfirmMessage by remember { mutableStateOf<String?>(null) }
+    var jsConfirmResult by remember { mutableStateOf<JsResult?>(null) }
+
+    // Desktop Site effect
+    LaunchedEffect(activeTab, activeTab?.isDesktopMode) {
+        activeTab?.let { tab ->
+            tab.webView?.let { webView ->
+                val userAgent = if (tab.isDesktopMode) {
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                } else {
+                    profile.userAgent
+                }
+                webView.settings.userAgentString = userAgent
+                webView.settings.useWideViewPort = true
+                webView.settings.loadWithOverviewMode = true
+                webView.reload()
+            }
+        }
+    }
+
+    // Bookmarks Dialog
+    if (showBookmarksDialog) {
+        AlertDialog(
+            onDismissRequest = { showBookmarksDialog = false },
+            title = { Text("الإشارات المرجعية 🔖", fontWeight = FontWeight.Bold, color = Color.White) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                TextButton(onClick = { showBookmarksDialog = false }) {
+                    Text("إغلاق", color = Color(0xFF4CAF50))
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (viewModel.bookmarks.isEmpty()) {
+                        Text("لا توجد إشارات مرجعية حالياً.", color = Color.Gray, fontSize = 12.sp)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(viewModel.bookmarks.toList()) { b ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(BackgroundDark)
+                                        .clickable {
+                                            showBookmarksDialog = false
+                                            activeTab?.let { tab ->
+                                                tab.url = b.second
+                                                tab.webView?.loadUrl(b.second)
+                                            }
+                                        }
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(b.first, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(b.second, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
+                                    IconButton(onClick = { viewModel.removeBookmark(b.second) }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.Delete, contentDescription = "مسح", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    // JS Alert Dialog
+    if (jsAlertMessage != null) {
+        AlertDialog(
+            onDismissRequest = {
+                jsAlertResult?.cancel()
+                jsAlertMessage = null
+                jsAlertResult = null
+            },
+            title = { Text("تنبيه الصفحة 🌐", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(jsAlertMessage ?: "", color = Color.LightGray) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        jsAlertResult?.confirm()
+                        jsAlertMessage = null
+                        jsAlertResult = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("موافق")
+                }
+            }
+        )
+    }
+
+    // JS Confirm Dialog
+    if (jsConfirmMessage != null) {
+        AlertDialog(
+            onDismissRequest = {
+                jsConfirmResult?.cancel()
+                jsConfirmMessage = null
+                jsConfirmResult = null
+            },
+            title = { Text("تأكيد من الصفحة 🌐", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(jsConfirmMessage ?: "", color = Color.LightGray) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        jsConfirmResult?.confirm()
+                        jsConfirmMessage = null
+                        jsConfirmResult = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("موافق")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        jsConfirmResult?.cancel()
+                        jsConfirmMessage = null
+                        jsConfirmResult = null
+                    }
+                ) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -331,7 +500,7 @@ fun ChromeBrowserView(
             .clickable(enabled = false) {}
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- Chrome-like Header Bar ---
+            // --- Chrome Streamlined SINGLE-ROW Header Bar ---
             Surface(
                 color = SurfaceDark,
                 shadowElevation = 4.dp,
@@ -341,85 +510,39 @@ fun ChromeBrowserView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFF2E7D32).copy(alpha = 0.2f))
-                                    .border(1.dp, Color(0xFF2E7D32), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
-                            ) {
-                                Text(
-                                    text = "بروفايل: ${profile.name}",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4CAF50)
-                                )
-                            }
-                            if (!profile.proxyHost.isNullOrEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0xFF10B981).copy(alpha = 0.1f))
-                                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                                ) {
-                                    Text(
-                                        text = "🔒 ${profile.proxyHost}:${profile.proxyPort}",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF10B981)
-                                    )
-                                }
-                            }
-                        }
-
-                        IconButton(
-                            onClick = { viewModel.closeChromeBrowser() },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Close Browser", tint = Color.LightGray)
-                        }
-                    }
-
-                    Divider(color = Color.White.copy(alpha = 0.08f))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                        // 1. Back button
                         IconButton(
                             onClick = { activeTab?.webView?.goBack() },
                             enabled = activeTab?.canGoBack == true,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = if (activeTab?.canGoBack == true) Color.White else Color.Gray
+                                tint = if (activeTab?.canGoBack == true) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
 
+                        // 2. Forward button
                         IconButton(
                             onClick = { activeTab?.webView?.goForward() },
                             enabled = activeTab?.canGoForward == true,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowForward,
                                 contentDescription = "Forward",
-                                tint = if (activeTab?.canGoForward == true) Color.White else Color.Gray
+                                tint = if (activeTab?.canGoForward == true) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
 
+                        // 3. Home button
                         IconButton(
                             onClick = {
                                 activeTab?.let {
@@ -428,40 +551,48 @@ fun ChromeBrowserView(
                                     it.webView?.loadUrl("about:blank")
                                 }
                             },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(Icons.Default.Home, contentDescription = "Home", tint = Color.White)
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Home",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
 
+                        // 4. Address Bar with Lock, Input and Reload (Weight 1f)
                         val isHttps = addressBarInput.startsWith("https")
+                        val isHttp = addressBarInput.startsWith("http:")
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(18.dp))
                                 .background(BackgroundDark)
-                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
-                                .padding(horizontal = 10.dp),
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(18.dp))
+                                .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    imageVector = if (isHttps) Icons.Default.Lock else Icons.Default.Warning,
+                                    imageVector = if (isHttps) Icons.Default.Lock else if (isHttp) Icons.Default.Warning else Icons.Default.Info,
                                     contentDescription = "Security Status",
-                                    tint = if (isHttps) Color(0xFF10B981) else Color(0xFFFBBF24),
-                                    modifier = Modifier.size(16.dp)
+                                    tint = if (isHttps) Color(0xFF10B981) else if (isHttp) Color(0xFFFBBF24) else Color.Gray,
+                                    modifier = Modifier.size(14.dp)
                                 )
 
                                 Box(modifier = Modifier.weight(1f)) {
                                     if (addressBarInput.isEmpty()) {
                                         Text(
                                             text = "ابحث أو أدخل عنوان ويب...",
-                                            fontSize = 12.sp,
-                                            color = Color.Gray
+                                            fontSize = 11.sp,
+                                            color = Color.Gray,
+                                            maxLines = 1
                                         )
                                     }
                                     androidx.compose.foundation.text.BasicTextField(
@@ -469,12 +600,12 @@ fun ChromeBrowserView(
                                         onValueChange = { addressBarInput = it },
                                         textStyle = androidx.compose.ui.text.TextStyle(
                                             color = Color.White,
-                                            fontSize = 13.sp
+                                            fontSize = 12.sp
                                         ),
                                         singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = androidx.compose.ui.text.input.ImeAction.Go),
                                         keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                            onDone = {
+                                            onGo = {
                                                 activeTab?.let { tab ->
                                                     var target = addressBarInput.trim()
                                                     if (target.isNotEmpty()) {
@@ -495,23 +626,33 @@ fun ChromeBrowserView(
                                     )
                                 }
 
+                                if (addressBarInput.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { addressBarInput = "" },
+                                        modifier = Modifier.size(16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color.Gray, modifier = Modifier.size(12.dp))
+                                    }
+                                }
+
                                 IconButton(
                                     onClick = { activeTab?.webView?.reload() },
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(20.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = "Reload",
                                         tint = Color.White,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                 }
                             }
                         }
 
+                        // 5. Tab switcher button
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(26.dp)
                                 .clip(RoundedCornerShape(6.dp))
                                 .border(1.5.dp, Color.White, RoundedCornerShape(6.dp))
                                 .clickable { viewModel.isTabSwitcherOpen = !viewModel.isTabSwitcherOpen },
@@ -525,19 +666,21 @@ fun ChromeBrowserView(
                             )
                         }
 
+                        // 6. New tab '+' button
                         IconButton(
                             onClick = { viewModel.openNewTabForActiveChrome() },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White)
+                            Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(20.dp))
                         }
 
+                        // 7. ⋮ Menu
                         Box {
                             IconButton(
                                 onClick = { menuExpanded = true },
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White, modifier = Modifier.size(20.dp))
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
@@ -552,12 +695,52 @@ fun ChromeBrowserView(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("إغلاق التبويب الحالي", color = Color.White) },
+                                    text = { Text("الإشارات المرجعية 🔖", color = Color.White) },
                                     onClick = {
-                                        activeTab?.let { viewModel.closeTabForActiveChrome(it.id) }
+                                        showBookmarksDialog = true
                                         menuExpanded = false
                                     }
                                 )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Checkbox(
+                                                checked = activeTab?.isDesktopMode == true,
+                                                onCheckedChange = { checked ->
+                                                    activeTab?.let { it.isDesktopMode = checked }
+                                                    menuExpanded = false
+                                                },
+                                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
+                                            )
+                                            Text("موقع سطح المكتب 💻", color = Color.White)
+                                        }
+                                    },
+                                    onClick = {
+                                        activeTab?.let { it.isDesktopMode = !it.isDesktopMode }
+                                        menuExpanded = false
+                                    }
+                                )
+                                if (activeTab != null && activeTab.url.isNotEmpty() && activeTab.url != "about:blank") {
+                                    DropdownMenuItem(
+                                        text = { Text("إضافة للإشارات المرجعية ⭐", color = Color.White) },
+                                        onClick = {
+                                            viewModel.addBookmark(activeTab.title, activeTab.url)
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                                if (viewModel.selectedVpnServerId == "vpn_eg" && viewModel.isBuiltInVpnEnabled) {
+                                    DropdownMenuItem(
+                                        text = { Text("تدوير عنوان IP المصري 🇪🇬", color = Color(0xFF10B981), fontWeight = FontWeight.Bold) },
+                                        onClick = {
+                                            viewModel.rotateEgyptProxy()
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
                                 DropdownMenuItem(
                                     text = {
                                         Text(
@@ -572,26 +755,41 @@ fun ChromeBrowserView(
                                             viewModel.stopLiveAutomation()
                                         } else {
                                             viewModel.startLiveAutomation { url, ua ->
-                                                // Automatic dynamic target tab routing is handled internally!
+                                                // Handled internally!
                                             }
                                         }
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("مسح ملفات الكوكيز بالكامل", color = Color.White) },
+                                    text = { Text("مسح ملفات الكوكيز بالكامل 🧹", color = Color.White) },
                                     onClick = {
                                         viewModel.clearAllCookiesForActiveProfile()
                                         menuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("إغلاق المتصفح المطور", color = Color.Red) },
+                                    text = { Text("إغلاق التبويب الحالي ✖", color = Color.White) },
+                                    onClick = {
+                                        activeTab?.let { viewModel.closeTabForActiveChrome(it.id) }
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("إغلاق المتصفح المطور 🚪", color = Color.Red) },
                                     onClick = {
                                         viewModel.closeChromeBrowser()
                                         menuExpanded = false
                                     }
                                 )
                             }
+                        }
+
+                        // 8. Close Browser button
+                        IconButton(
+                            onClick = { viewModel.closeChromeBrowser() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Close Browser", tint = Color.LightGray, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -602,8 +800,9 @@ fun ChromeBrowserView(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                if (activeTab == null || activeTab.url.isEmpty()) {
+                if (activeTab == null || activeTab.url.isEmpty() || activeTab.url == "about:blank") {
                     BangoNewTabPage(
+                        viewModel = viewModel,
                         onNavigate = { targetUrl ->
                             activeTab?.let { tab ->
                                 tab.url = targetUrl
@@ -618,8 +817,56 @@ fun ChromeBrowserView(
                                 val webView = activeTab.webView ?: android.webkit.WebView(context).apply {
                                     settings.javaScriptEnabled = true
                                     settings.domStorageEnabled = true
+                                    settings.databaseEnabled = true
+                                    settings.allowFileAccess = true
+                                    settings.allowContentAccess = true
                                     settings.loadWithOverviewMode = true
                                     settings.useWideViewPort = true
+                                    settings.javaScriptCanOpenWindowsAutomatically = true
+                                    settings.mediaPlaybackRequiresUserGesture = false
+                                    settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+                                    webChromeClient = object : android.webkit.WebChromeClient() {
+                                        override fun onProgressChanged(view: android.webkit.WebView?, newProgress: Int) {
+                                            super.onProgressChanged(view, newProgress)
+                                            activeTab.progress = newProgress
+                                            activeTab.isLoading = newProgress < 100
+                                        }
+
+                                        override fun onShowFileChooser(
+                                            webView: android.webkit.WebView?,
+                                            filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
+                                            fileChooserParams: android.webkit.WebChromeClient.FileChooserParams?
+                                        ): Boolean {
+                                            uploadMessageCallback?.onReceiveValue(null)
+                                            uploadMessageCallback = filePathCallback
+                                            val intent = fileChooserParams?.createIntent() ?: android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                                                type = "*/*"
+                                                addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                                            }
+                                            try {
+                                                fileChooserLauncher.launch(intent)
+                                            } catch (e: Exception) {
+                                                uploadMessageCallback?.onReceiveValue(null)
+                                                uploadMessageCallback = null
+                                                return false
+                                            }
+                                            return true
+                                        }
+
+                                        override fun onJsAlert(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                            jsAlertMessage = message
+                                            jsAlertResult = result
+                                            return true
+                                        }
+
+                                        override fun onJsConfirm(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                            jsConfirmMessage = message
+                                            jsConfirmResult = result
+                                            return true
+                                        }
+                                    }
+
                                     webViewClient = object : android.webkit.WebViewClient() {
                                         override fun onPageStarted(view: android.webkit.WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                                             super.onPageStarted(view, url, favicon)
@@ -649,6 +896,22 @@ fun ChromeBrowserView(
                                                 activeTab.url = url
                                             }
                                         }
+
+                                        override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                            val url = request?.url?.toString() ?: return false
+                                            if (url.startsWith("http://") || url.startsWith("https://")) {
+                                                return false
+                                            }
+                                            try {
+                                                val intent = android.content.Intent.parseUri(url, android.content.Intent.URI_INTENT_SCHEME)
+                                                val context = view?.context
+                                                context?.startActivity(intent)
+                                                return true
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                                return true
+                                            }
+                                        }
                                     }
                                     applyProfileToWebView(this, profile)
                                     loadUrl(activeTab.url)
@@ -668,6 +931,7 @@ fun ChromeBrowserView(
 
                 if (activeTab?.isLoading == true) {
                     LinearProgressIndicator(
+                        progress = activeTab.progress / 100f,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp)
@@ -687,20 +951,66 @@ fun ChromeBrowserView(
 
 @Composable
 fun BangoNewTabPage(
+    viewModel: MainViewModel,
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shortcuts = listOf(
-        Triple("Google", "https://www.google.com", "🔍"),
-        Triple("Bing", "https://www.bing.com", "🎯"),
-        Triple("Facebook", "https://www.facebook.com", "👥"),
-        Triple("YouTube", "https://www.youtube.com", "📺"),
-        Triple("X / Twitter", "https://www.x.com", "🐦"),
-        Triple("Instagram", "https://www.instagram.com", "📸"),
-        Triple("ChatGPT", "https://chatgpt.com", "🤖"),
-        Triple("Canva", "https://www.canva.com", "🎨"),
-        Triple("Github", "https://github.com", "💻")
-    )
+    var searchQueryInput by remember { mutableStateOf("") }
+    var showAddShortcutDialog by remember { mutableStateOf(false) }
+    var shortcutTitleInput by remember { mutableStateOf("") }
+    var shortcutUrlInput by remember { mutableStateOf("") }
+    var shortcutEmojiInput by remember { mutableStateOf("") }
+
+    if (showAddShortcutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddShortcutDialog = false },
+            title = { Text("إضافة اختصار جديد 🔗", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.addCustomShortcut(shortcutTitleInput, shortcutUrlInput, shortcutEmojiInput)
+                        shortcutTitleInput = ""
+                        shortcutUrlInput = ""
+                        shortcutEmojiInput = ""
+                        showAddShortcutDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                    enabled = shortcutUrlInput.isNotBlank()
+                ) {
+                    Text("حفظ")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddShortcutDialog = false }) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = shortcutTitleInput,
+                        onValueChange = { shortcutTitleInput = it },
+                        label = { Text("عنوان الموقع", color = Color.LightGray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                    OutlinedTextField(
+                        value = shortcutUrlInput,
+                        onValueChange = { shortcutUrlInput = it },
+                        label = { Text("رابط الموقع (URL)", color = Color.LightGray) },
+                        placeholder = { Text("example.com") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                    OutlinedTextField(
+                        value = shortcutEmojiInput,
+                        onValueChange = { shortcutEmojiInput = it },
+                        label = { Text("إيموجي كأيقونة (مثل: 📺, 💻)", color = Color.LightGray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                }
+            }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -718,15 +1028,16 @@ fun BangoNewTabPage(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
             modifier = Modifier
-                .padding(24.dp)
+                .padding(20.dp)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
         ) {
             Box(
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(14.dp))
                     .background(
                         Brush.linearGradient(
                             colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
@@ -737,7 +1048,7 @@ fun BangoNewTabPage(
                 Text(
                     text = "B",
                     color = Color.White,
-                    fontSize = 38.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Black
                 )
             }
@@ -745,63 +1056,123 @@ fun BangoNewTabPage(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "تبويب مالي منعزل آمن ✨",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Text(
                     text = "تصفح آمن مجهول البصمات ومحمي بالكامل",
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     color = Color.LightGray.copy(alpha = 0.8f)
                 )
             }
 
-            Text(
-                text = "الوصول السريع للمواقع الأكثر شعبية:",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50),
-                modifier = Modifier.align(Alignment.Start)
+            // Central Search Bar
+            OutlinedTextField(
+                value = searchQueryInput,
+                onValueChange = { searchQueryInput = it },
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .height(48.dp),
+                placeholder = { Text("ابحث في الويب أو أدخل عنوان ويب...", color = Color.Gray, fontSize = 11.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "بحث", tint = Color.Gray, modifier = Modifier.size(16.dp)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                    onSearch = {
+                        if (searchQueryInput.isNotBlank()) {
+                            var target = searchQueryInput.trim()
+                            if (!target.startsWith("http://") && !target.startsWith("https://")) {
+                                target = if (target.contains(".") && !target.contains(" ")) {
+                                    "https://$target"
+                                } else {
+                                    "https://www.bing.com/search?q=" + java.net.URLEncoder.encode(target, "UTF-8")
+                                }
+                            }
+                            onNavigate(target)
+                        }
+                    }
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = SurfaceDark,
+                    unfocusedContainerColor = SurfaceDark,
+                    focusedBorderColor = Color(0xFF4CAF50),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                shape = RoundedCornerShape(24.dp)
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "الوصول السريع للمواقع الأكثر شعبية:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4CAF50)
+                )
+                TextButton(onClick = { showAddShortcutDialog = true }) {
+                    Text("+ إضافة اختصار", color = Color(0xFF4CAF50), fontSize = 11.sp)
+                }
+            }
 
             androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
                 columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(3),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp)
             ) {
-                items(shortcuts.size) { index ->
-                    val shortcut = shortcuts[index]
+                items(viewModel.customShortcuts.size) { index ->
+                    val shortcut = viewModel.customShortcuts[index]
                     Card(
-                        onClick = { onNavigate(shortcut.second) },
                         colors = CardDefaults.cardColors(containerColor = SurfaceDark),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
-                        shape = RoundedCornerShape(12.dp)
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(10.dp)
-                        ) {
-                            Box(
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(BackgroundDark),
-                                contentAlignment = Alignment.Center
+                                    .clickable { onNavigate(shortcut.second) }
+                                    .padding(8.dp)
+                                    .fillMaxWidth()
                             ) {
-                                Text(shortcut.third, fontSize = 18.sp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(BackgroundDark),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(shortcut.third, fontSize = 14.sp)
+                                }
+                                Text(
+                                    text = shortcut.first,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
-                            Text(
-                                text = shortcut.first,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            IconButton(
+                                onClick = { viewModel.removeCustomShortcut(shortcut.second) },
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .align(Alignment.TopEnd)
+                                    .padding(2.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "مسح", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(10.dp))
+                            }
                         }
                     }
                 }
@@ -822,115 +1193,112 @@ fun TabSwitcherOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.85f))
+            .background(Color.Black.copy(alpha = 0.9f))
             .clickable { viewModel.isTabSwitcherOpen = false }
     ) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.85f)
-                .align(Alignment.BottomCenter)
-                .clickable(enabled = false) {}
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = "مبدل التبويبات النشطة (العدد: ${tabs.size}) 📑",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "مبدل التبويبات النشطة (العدد: ${tabs.size})",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    IconButton(
+                        onClick = { viewModel.openNewTabForActiveChrome() },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2E7D32))
                     ) {
-                        IconButton(
-                            onClick = { viewModel.openNewTabForActiveChrome() },
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF2E7D32))
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(18.dp))
-                        }
+                        Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
 
-                        IconButton(
-                            onClick = { viewModel.isTabSwitcherOpen = false },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Close Tab Switcher", tint = Color.White)
-                        }
+                    IconButton(
+                        onClick = { viewModel.isTabSwitcherOpen = false },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close Tab Switcher", tint = Color.White)
                     }
                 }
+            }
 
-                Divider(color = Color.White.copy(alpha = 0.1f))
+            Divider(color = Color.White.copy(alpha = 0.15f))
 
-                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                    columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    items(tabs.size) { index ->
-                        val tab = tabs[index]
-                        val isSelected = index == activeTabIdx
-                        Card(
-                            onClick = { viewModel.selectTabForActiveChrome(index) },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) Color(0xFF132B1B) else SurfaceCard
+            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                items(tabs.size) { index ->
+                    val tab = tabs[index]
+                    val isSelected = index == activeTabIdx
+                    Card(
+                        onClick = { viewModel.selectTabForActiveChrome(index) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) Color(0xFF132B1B) else SurfaceCard
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp)
+                            .border(
+                                width = if (isSelected) 2.dp else 0.5.dp,
+                                color = if (isSelected) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(12.dp)
                             ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(140.dp)
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 0.5.dp,
-                                    color = if (isSelected) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.1f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(10.dp),
-                                    verticalArrangement = Arrangement.SpaceBetween
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            text = tab.title,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp,
-                                            color = Color.White,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = if (tab.url.isEmpty()) "صفحة فارغة" else tab.url,
-                                            fontSize = 9.sp,
-                                            color = Color.LightGray,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
+                                    Text(
+                                        text = tab.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        color = Color.White,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = if (tab.url.isEmpty()) "صفحة فارغة" else tab.url,
+                                        fontSize = 9.sp,
+                                        color = Color.LightGray,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
 
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(4.dp))
@@ -943,28 +1311,50 @@ fun TabSwitcherOverlay(
                                             color = Color.Gray
                                         )
                                     }
+                                    if (tab.isDesktopMode) {
+                                        Icon(
+                                            Icons.Default.Build,
+                                            contentDescription = "Desktop Mode",
+                                            tint = Color(0xFF10B981),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
                                 }
+                            }
 
-                                IconButton(
-                                    onClick = { viewModel.closeTabForActiveChrome(tab.id) },
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .align(Alignment.TopEnd)
-                                        .padding(4.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.Black.copy(alpha = 0.4f))
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Close Tab",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(10.dp)
-                                    )
-                                }
+                            IconButton(
+                                onClick = { viewModel.closeTabForActiveChrome(tab.id) },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.5f))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close Tab",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp)
+                                )
                             }
                         }
                     }
                 }
+            }
+
+            // Add Tab button at bottom
+            Button(
+                onClick = { viewModel.openNewTabForActiveChrome() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "أضف تبويب")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("فتح علامة تبويب جديدة ➕", fontWeight = FontWeight.Bold)
             }
         }
     }
