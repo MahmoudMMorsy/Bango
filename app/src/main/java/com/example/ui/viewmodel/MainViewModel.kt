@@ -39,6 +39,19 @@ import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
 
+class BrowserTab(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    initialUrl: String = ""
+) {
+    var url by androidx.compose.runtime.mutableStateOf(initialUrl)
+    var title by androidx.compose.runtime.mutableStateOf(if (initialUrl.isEmpty()) "علامة تبويب جديدة" else "جاري التحميل...")
+    var webView: android.webkit.WebView? = null
+    var isLoading by androidx.compose.runtime.mutableStateOf(false)
+    var canGoBack by androidx.compose.runtime.mutableStateOf(false)
+    var canGoForward by androidx.compose.runtime.mutableStateOf(false)
+    var progress by androidx.compose.runtime.mutableIntStateOf(0)
+}
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: SearchRepository
@@ -110,6 +123,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var activeAutomationUserAgentUsed by mutableStateOf("")
     val rollingTerminalLogs = MutableStateFlow<List<String>>(emptyList())
     var isSplashActive by mutableStateOf(true)
+
+    // Chrome-like Multi-profile Browser States
+    var activeChromeProfile by mutableStateOf<BrowserProfile?>(null)
+    var isChromeBrowserOpen by mutableStateOf(false)
+    var isTabSwitcherOpen by mutableStateOf(false)
+    val chromeTabsPerProfile = androidx.compose.runtime.mutableStateMapOf<Int, MutableList<BrowserTab>>()
+    val activeTabIdxPerProfile = androidx.compose.runtime.mutableStateMapOf<Int, Int>()
 
     // --- Built-in VPN & Proxy Rotator ---
     private val sharedPrefs = application.getSharedPreferences("auto_search_prefs", Context.MODE_PRIVATE)
@@ -774,6 +794,103 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             automationEngine.clearProxySettings()
             addTerminalLog("🛑 تم إيقاف جلسة الأتمتة وتنظيف إعدادات التخفي بنجاح.")
+        }
+    }
+
+    // --- Chrome-like Multi-profile Browser Actions ---
+    fun launchChromeBrowser(profile: BrowserProfile) {
+        activeChromeProfile = profile
+        isChromeBrowserOpen = true
+        isTabSwitcherOpen = false
+
+        val pId = profile.id
+        if (!chromeTabsPerProfile.containsKey(pId) || chromeTabsPerProfile[pId].isNullOrEmpty()) {
+            val newList = androidx.compose.runtime.mutableStateListOf<BrowserTab>()
+            newList.add(BrowserTab(initialUrl = "")) // Start with a New Tab
+            chromeTabsPerProfile[pId] = newList
+            activeTabIdxPerProfile[pId] = 0
+        }
+        addTerminalLog("🚀 تم تشغيل متصفح كروم المطور للبروفايل: ${profile.name}")
+    }
+
+    fun closeChromeBrowser() {
+        isChromeBrowserOpen = false
+        activeChromeProfile = null
+        addTerminalLog("🛑 تم إغلاق متصفح كروم المطور")
+    }
+
+    fun openNewTabForActiveChrome(initialUrl: String = "") {
+        val profile = activeChromeProfile ?: return
+        val pId = profile.id
+        val list = chromeTabsPerProfile[pId] ?: androidx.compose.runtime.mutableStateListOf()
+        val newTab = BrowserTab(initialUrl = initialUrl)
+        list.add(newTab)
+        chromeTabsPerProfile[pId] = list
+        activeTabIdxPerProfile[pId] = list.size - 1
+        isTabSwitcherOpen = false
+        addTerminalLog("➕ تم فتح لسان تبويب جديد في بروفايل: ${profile.name}")
+    }
+
+    fun closeTabForActiveChrome(tabId: String) {
+        val profile = activeChromeProfile ?: return
+        val pId = profile.id
+        val list = chromeTabsPerProfile[pId] ?: return
+        val index = list.indexOfFirst { it.id == tabId }
+        if (index != -1) {
+            val tab = list[index]
+            try {
+                tab.webView?.destroy()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            tab.webView = null
+            list.removeAt(index)
+
+            if (list.isEmpty()) {
+                // If no tabs left, open a new blank tab
+                list.add(BrowserTab(initialUrl = ""))
+                activeTabIdxPerProfile[pId] = 0
+            } else {
+                val currentActiveIdx = activeTabIdxPerProfile[pId] ?: 0
+                if (currentActiveIdx >= list.size) {
+                    activeTabIdxPerProfile[pId] = list.size - 1
+                } else if (currentActiveIdx > index) {
+                    activeTabIdxPerProfile[pId] = currentActiveIdx - 1
+                }
+            }
+            chromeTabsPerProfile[pId] = list
+        }
+    }
+
+    fun selectTabForActiveChrome(index: Int) {
+        val profile = activeChromeProfile ?: return
+        val pId = profile.id
+        val list = chromeTabsPerProfile[pId] ?: return
+        if (index in list.indices) {
+            activeTabIdxPerProfile[pId] = index
+            isTabSwitcherOpen = false
+        }
+    }
+
+    fun getActiveTab(): BrowserTab? {
+        val profile = activeChromeProfile ?: return null
+        val pId = profile.id
+        val list = chromeTabsPerProfile[pId] ?: return null
+        val activeIdx = activeTabIdxPerProfile[pId] ?: 0
+        return if (activeIdx in list.indices) list[activeIdx] else null
+    }
+
+    fun clearAllCookiesForActiveProfile() {
+        val profile = activeChromeProfile ?: return
+        viewModelScope.launch {
+            try {
+                val cookieManager = android.webkit.CookieManager.getInstance()
+                cookieManager.removeAllCookies(null)
+                cookieManager.flush()
+                addTerminalLog("🧹 تم مسح ملفات تعريف الارتباط (Cookies) بالكامل لبروفايل: ${profile.name}")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
