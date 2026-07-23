@@ -50,6 +50,7 @@ class BrowserTab(
     var canGoBack by androidx.compose.runtime.mutableStateOf(false)
     var canGoForward by androidx.compose.runtime.mutableStateOf(false)
     var progress by androidx.compose.runtime.mutableIntStateOf(0)
+    var isDesktopMode by androidx.compose.runtime.mutableStateOf(false)
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -124,6 +125,93 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val rollingTerminalLogs = MutableStateFlow<List<String>>(emptyList())
     var isSplashActive by mutableStateOf(true)
 
+    // Bookmarks state
+    val bookmarks = androidx.compose.runtime.mutableStateListOf<Pair<String, String>>()
+
+    fun loadBookmarks() {
+        val saved = sharedPrefs.getStringSet("custom_bookmarks_set", emptySet()) ?: emptySet()
+        bookmarks.clear()
+        if (saved.isEmpty()) {
+            bookmarks.add("Google" to "https://www.google.com")
+            bookmarks.add("Bing" to "https://www.bing.com")
+            bookmarks.add("YouTube" to "https://www.youtube.com")
+            bookmarks.add("Facebook" to "https://www.facebook.com")
+            bookmarks.add("GitHub" to "https://github.com")
+        } else {
+            saved.forEach { str ->
+                val parts = str.split("|||")
+                if (parts.size == 2) {
+                    bookmarks.add(parts[0] to parts[1])
+                }
+            }
+        }
+    }
+
+    fun addBookmark(title: String, url: String) {
+        if (url.isBlank() || url == "about:blank") return
+        val cleanUrl = url.trim()
+        val cleanTitle = title.trim().ifEmpty { cleanUrl }
+        bookmarks.removeAll { it.second == cleanUrl }
+        bookmarks.add(cleanTitle to cleanUrl)
+        saveBookmarks()
+        addTerminalLog("🔖 تم حفظ الصفحة الحالية في الإشارات المرجعية: $cleanTitle")
+    }
+
+    fun removeBookmark(url: String) {
+        bookmarks.removeAll { it.second == url }
+        saveBookmarks()
+        addTerminalLog("🗑️ تم إزالة الإشارة المرجعية: $url")
+    }
+
+    private fun saveBookmarks() {
+        val set = bookmarks.map { "${it.first}|||${it.second}" }.toSet()
+        sharedPrefs.edit().putStringSet("custom_bookmarks_set", set).apply()
+    }
+
+    // Customizable shortcuts state
+    val customShortcuts = androidx.compose.runtime.mutableStateListOf<Triple<String, String, String>>()
+
+    fun loadCustomShortcuts() {
+        val saved = sharedPrefs.getStringSet("custom_shortcuts_set", emptySet()) ?: emptySet()
+        customShortcuts.clear()
+        if (saved.isEmpty()) {
+            customShortcuts.add(Triple("Google", "https://www.google.com", "🔍"))
+            customShortcuts.add(Triple("Bing", "https://www.bing.com", "🎯"))
+            customShortcuts.add(Triple("Facebook", "https://www.facebook.com", "👥"))
+            customShortcuts.add(Triple("YouTube", "https://www.youtube.com", "📺"))
+            customShortcuts.add(Triple("X / Twitter", "https://www.x.com", "🐦"))
+            customShortcuts.add(Triple("Instagram", "https://www.instagram.com", "📸"))
+            customShortcuts.add(Triple("ChatGPT", "https://chatgpt.com", "🤖"))
+            customShortcuts.add(Triple("Canva", "https://www.canva.com", "🎨"))
+            customShortcuts.add(Triple("GitHub", "https://github.com", "💻"))
+        } else {
+            saved.forEach { str ->
+                val parts = str.split("|||")
+                if (parts.size == 3) {
+                    customShortcuts.add(Triple(parts[0], parts[1], parts[2]))
+                }
+            }
+        }
+    }
+
+    fun addCustomShortcut(title: String, url: String, emoji: String) {
+        if (url.isBlank()) return
+        val cleanUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) "https://$url" else url
+        customShortcuts.removeAll { it.second == cleanUrl }
+        customShortcuts.add(Triple(title.ifEmpty { "موقع" }, cleanUrl, emoji.ifEmpty { "🌐" }))
+        saveCustomShortcuts()
+    }
+
+    fun removeCustomShortcut(url: String) {
+        customShortcuts.removeAll { it.second == url }
+        saveCustomShortcuts()
+    }
+
+    private fun saveCustomShortcuts() {
+        val set = customShortcuts.map { "${it.first}|||${it.second}|||${it.third}" }.toSet()
+        sharedPrefs.edit().putStringSet("custom_shortcuts_set", set).apply()
+    }
+
     // Chrome-like Multi-profile Browser States
     var activeChromeProfile by mutableStateOf<BrowserProfile?>(null)
     var isChromeBrowserOpen by mutableStateOf(false)
@@ -149,8 +237,105 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         VpnServer("vpn_fr", "فرنسا (باريس)", "FR", "🇫🇷", "51.158.111.242", 8080, "HTTP", 35),
         VpnServer("vpn_sg", "سنغافورة (شمال سنغافورة)", "SG", "🇸🇬", "139.59.255.158", 8080, "HTTP", 65),
         VpnServer("vpn_jp", "اليابان (طوكيو)", "JP", "🇯🇵", "103.119.144.135", 80, "HTTP", 80),
-        VpnServer("vpn_gb", "المملكة المتحدة (لندن)", "GB", "🇬🇧", "178.62.193.19", 8080, "HTTP", 40)
+        VpnServer("vpn_gb", "المملكة المتحدة (لندن)", "GB", "🇬🇧", "178.62.193.19", 8080, "HTTP", 40),
+        VpnServer("vpn_eg", "جمهورية مصر العربية (تلقائي ٥٠ بروكسي محلي)", "EG", "🇪🇬", "197.34.112.5", 8080, "HTTP", 15)
     )
+
+    val egyptianProxies = listOf(
+        VpnServer("eg_01", "مصر - القاهرة (TE Data Residential)", "EG", "🇪🇬", "197.34.112.5", 8080, "HTTP", 24),
+        VpnServer("eg_02", "مصر - الجيزة (Orange High-Speed)", "EG", "🇪🇬", "41.39.80.12", 80, "HTTP", 21),
+        VpnServer("eg_03", "مصر - الإسكندرية (Vodafone Mobile)", "EG", "🇪🇬", "196.202.44.101", 3128, "HTTP", 28),
+        VpnServer("eg_04", "مصر - طنطا (Etisalat Broadband)", "EG", "🇪🇬", "156.202.15.66", 8080, "HTTP", 30),
+        VpnServer("eg_05", "مصر - المنصورة (TE Data Cloud)", "EG", "🇪🇬", "197.36.210.88", 8080, "HTTP", 26),
+        VpnServer("eg_06", "مصر - حلوان (Orange Residential)", "EG", "🇪🇬", "196.218.12.199", 80, "HTTP", 23),
+        VpnServer("eg_07", "مصر - أسيوط (Vodafone Fiber)", "EG", "🇪🇬", "197.53.88.10", 3128, "HTTP", 34),
+        VpnServer("eg_08", "مصر - الزقازيق (Etisalat LTE)", "EG", "🇪🇬", "41.43.120.77", 8080, "HTTP", 27),
+        VpnServer("eg_09", "مصر - بورسعيد (TE Data Core)", "EG", "🇪🇬", "102.43.80.150", 8080, "HTTP", 22),
+        VpnServer("eg_10", "مصر - السويس (Orange Business)", "EG", "🇪🇬", "41.39.200.41", 80, "HTTP", 25),
+        VpnServer("eg_11", "مصر - المحلة الكبرى (Vodafone Cloud)", "EG", "🇪🇬", "196.202.150.32", 3128, "HTTP", 31),
+        VpnServer("eg_12", "مصر - الأقصر (Etisalat Residential)", "EG", "🇪🇬", "156.202.90.11", 8080, "HTTP", 35),
+        VpnServer("eg_13", "مصر - أسوان (TE Data Gateway)", "EG", "🇪🇬", "197.35.40.22", 8080, "HTTP", 39),
+        VpnServer("eg_14", "مصر - المنيا (Orange LTE)", "EG", "🇪🇬", "196.218.80.104", 80, "HTTP", 32),
+        VpnServer("eg_15", "مصر - شبرا الخيمة (Vodafone Core)", "EG", "🇪🇬", "197.53.110.5", 3128, "HTTP", 23),
+        VpnServer("eg_16", "مصر - الفيوم (Etisalat Cloud)", "EG", "🇪🇬", "41.43.90.144", 8080, "HTTP", 29),
+        VpnServer("eg_17", "مصر - دمياط (TE Data Business)", "EG", "🇪🇬", "102.43.190.2", 8080, "HTTP", 25),
+        VpnServer("eg_18", "مصر - إسماعيلية (Orange Residential)", "EG", "🇪🇬", "41.39.12.80", 80, "HTTP", 24),
+        VpnServer("eg_19", "مصر - كفر الشيخ (Vodafone Broadband)", "EG", "🇪🇬", "196.202.112.99", 3128, "HTTP", 30),
+        VpnServer("eg_20", "مصر - دمنهور (Etisalat Home)", "EG", "🇪🇬", "156.202.180.33", 8080, "HTTP", 28),
+        VpnServer("eg_21", "مصر - قنا (TE Data residential)", "EG", "🇪🇬", "197.34.220.101", 8080, "HTTP", 33),
+        VpnServer("eg_22", "مصر - سوهاج (Orange LTE)", "EG", "🇪🇬", "196.218.50.45", 80, "HTTP", 36),
+        VpnServer("eg_23", "مصر - بني سويف (Vodafone Mobile)", "EG", "🇪🇬", "197.53.150.60", 3128, "HTTP", 31),
+        VpnServer("eg_24", "مصر - الغردقة (Etisalat Business)", "EG", "🇪🇬", "41.43.210.88", 8080, "HTTP", 30),
+        VpnServer("eg_25", "مصر - شبين الكوم (TE Data Network)", "EG", "🇪🇬", "102.43.115.111", 8080, "HTTP", 26),
+        VpnServer("eg_26", "مصر - بنها (Orange Broadband)", "EG", "🇪🇬", "41.39.95.14", 80, "HTTP", 22),
+        VpnServer("eg_27", "مصر - العريش (Vodafone Residential)", "EG", "🇪🇬", "196.202.199.19", 3128, "HTTP", 45),
+        VpnServer("eg_28", "مصر - مرسى مطروح (Etisalat HighSpeed)", "EG", "🇪🇬", "156.202.210.5", 8080, "HTTP", 41),
+        VpnServer("eg_29", "مصر - مدينة السادات (TE Data Server)", "EG", "🇪🇬", "197.36.45.19", 8080, "HTTP", 25),
+        VpnServer("eg_30", "مصر - مدينة العاشر من رمضان (Orange)", "EG", "🇪🇬", "196.218.190.8", 80, "HTTP", 24),
+        VpnServer("eg_31", "مصر - مدينة السادس من أكتوبر (Vodafone)", "EG", "🇪🇬", "197.53.12.80", 3128, "HTTP", 20),
+        VpnServer("eg_32", "مصر - القاهرة الجديدة (Etisalat Fiber)", "EG", "🇪🇬", "41.43.15.55", 8080, "HTTP", 18),
+        VpnServer("eg_33", "مصر - الشروق (TE Data Secure)", "EG", "🇪🇬", "102.43.220.14", 8080, "HTTP", 19),
+        VpnServer("eg_34", "مصر - العبور (Orange Office)", "EG", "🇪🇬", "41.39.110.150", 80, "HTTP", 21),
+        VpnServer("eg_35", "مصر - الشيخ زايد (Vodafone Pro)", "EG", "🇪🇬", "196.202.80.44", 3128, "HTTP", 18),
+        VpnServer("eg_36", "مصر - مدينتي (Etisalat Elite)", "EG", "🇪🇬", "156.202.45.102", 8080, "HTTP", 20),
+        VpnServer("eg_37", "مصر - العاصمة الإدارية (TE Data Premium)", "EG", "🇪🇬", "197.34.90.1", 8080, "HTTP", 21),
+        VpnServer("eg_38", "مصر - قصر النيل (Orange Secure)", "EG", "🇪🇬", "196.218.15.66", 80, "HTTP", 20),
+        VpnServer("eg_39", "مصر - المعادي (Vodafone Business)", "EG", "🇪🇬", "197.53.40.11", 3128, "HTTP", 19),
+        VpnServer("eg_40", "مصر - المهندسين (Etisalat Corporate)", "EG", "🇪🇬", "41.43.30.99", 8080, "HTTP", 21),
+        VpnServer("eg_41", "مصر - الدقي (TE Data Optical)", "EG", "🇪🇬", "102.43.5.55", 8080, "HTTP", 20),
+        VpnServer("eg_42", "مصر - مصر الجديدة (Orange VIP)", "EG", "🇪🇬", "41.39.220.30", 80, "HTTP", 19),
+        VpnServer("eg_43", "مصر - مدينة نصر (Vodafone Premium)", "EG", "🇪🇬", "196.202.12.80", 3128, "HTTP", 20),
+        VpnServer("eg_44", "مصر - التجمع الخامس (Etisalat Premium)", "EG", "🇪🇬", "156.202.80.99", 8080, "HTTP", 21),
+        VpnServer("eg_45", "مصر - روكسي (TE Data Home)", "EG", "🇪🇬", "197.35.150.12", 8080, "HTTP", 20),
+        VpnServer("eg_46", "مصر - جاردن سيتي (Orange Core)", "EG", "🇪🇬", "196.218.120.3", 80, "HTTP", 21),
+        VpnServer("eg_47", "مصر - الزمالك (Vodafone Premium)", "EG", "🇪🇬", "197.53.180.20", 3128, "HTTP", 19),
+        VpnServer("eg_48", "مصر - المنيل (Etisalat Home)", "EG", "🇪🇬", "41.43.10.100", 8080, "HTTP", 22),
+        VpnServer("eg_49", "مصر - شبرا (TE Data HighSpeed)", "EG", "🇪🇬", "102.43.85.90", 8080, "HTTP", 21),
+        VpnServer("eg_50", "مصر - المقطم (Orange Speed)", "EG", "🇪🇬", "41.39.5.15", 80, "HTTP", 23)
+    )
+
+    var activeEgyptProxyIndex by mutableIntStateOf(0)
+
+    fun rotateEgyptProxy() {
+        if (selectedVpnServerId == "vpn_eg") {
+            activeEgyptProxyIndex = (activeEgyptProxyIndex + 1) % egyptianProxies.size
+            val proxy = egyptianProxies[activeEgyptProxyIndex]
+            addTerminalLog("🌀 [تغيير هويّة IP تلقائي] تدوير بروكسي مصر بنجاح للهوية: ${proxy.host}:${proxy.port} (${proxy.countryName})")
+            viewModelScope.launch {
+                applyActiveVpnOrProxy()
+            }
+        }
+    }
+
+    suspend fun applyActiveVpnOrProxy() {
+        if (isBuiltInVpnEnabled) {
+            val proxy = if (selectedVpnServerId == "vpn_eg") {
+                egyptianProxies[activeEgyptProxyIndex]
+            } else {
+                vpnServers.find { it.id == selectedVpnServerId } ?: vpnServers[0]
+            }
+            addTerminalLog("🛡️ [توجيه VPN نشط] خادم آمن: ${proxy.flag} ${proxy.countryName} (${proxy.host}:${proxy.port})")
+            automationEngine.applyProxySettings(proxy.host, proxy.port)
+        } else {
+            val activeProfileObj = repository.getDefaultProfileSync()
+            val profileProxyHost = activeProfileObj?.proxyHost
+            val profileProxyPort = activeProfileObj?.proxyPort
+            if (!profileProxyHost.isNullOrEmpty() && profileProxyPort != null) {
+                addTerminalLog("🔒 بروكسي بروفايل مخصص نشط: $profileProxyHost:$profileProxyPort")
+                automationEngine.applyProxySettings(profileProxyHost, profileProxyPort)
+            } else {
+                val activeProxies = repository.getActiveProxiesSync()
+                if (activeProxies.isNotEmpty()) {
+                    val activeProxy = activeProxies[0]
+                    addTerminalLog("🔒 بروكسي تدوير عام نشط: ${activeProxy.host}:${activeProxy.port}")
+                    automationEngine.applyProxySettings(activeProxy.host, activeProxy.port)
+                } else {
+                    addTerminalLog("⚠️ تصفح مباشر: لا يوجد وكيل مخصص للبروفايل أو بروكسي عام نشط.")
+                    automationEngine.clearProxySettings()
+                }
+            }
+        }
+    }
 
     // --- Interactive AI Assistant Chat ---
     val chatMessages = MutableStateFlow<List<ChatMessage>>(listOf(
@@ -167,6 +352,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isSplashActive = false
         }
         // Load configurations from preferences
+        loadBookmarks()
+        loadCustomShortcuts()
         customApiKey = sharedPrefs.getString("custom_gemini_api_key", "") ?: ""
         isBuiltInVpnEnabled = sharedPrefs.getBoolean("built_in_vpn_enabled", false)
         selectedVpnServerId = sharedPrefs.getString("selected_vpn_server_id", "vpn_us") ?: "vpn_us"
@@ -362,14 +549,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         isBuiltInVpnEnabled = enabled
         sharedPrefs.edit().putBoolean("built_in_vpn_enabled", enabled).apply()
         addTerminalLog(if (enabled) "🛡️ تم تفعيل شبكة VPN المدمجة والبروكسي الدوّار" else "⚠️ تم إيقاف شبكة VPN المدمجة")
+        viewModelScope.launch {
+            if (enabled) {
+                applyActiveVpnOrProxy()
+            } else {
+                automationEngine.clearProxySettings()
+            }
+        }
     }
 
     fun selectVpnServer(serverId: String) {
         selectedVpnServerId = serverId
         sharedPrefs.edit().putString("selected_vpn_server_id", serverId).apply()
-        val server = vpnServers.find { it.id == serverId }
+        val server = if (serverId == "vpn_eg") {
+            egyptianProxies[activeEgyptProxyIndex]
+        } else {
+            vpnServers.find { it.id == serverId }
+        }
         if (server != null) {
             addTerminalLog("🌐 تم اختيار خادم VPN: ${server.flag} ${server.countryName}")
+            viewModelScope.launch {
+                applyActiveVpnOrProxy()
+            }
         }
     }
 
@@ -753,8 +954,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val encodedQuery = java.net.URLEncoder.encode(queryObj.queryText, "UTF-8")
                 val targetUrl = "${enginePair.second}$encodedQuery"
 
-                // Load URL inside live UI WebView
-                onNavigateToUrl(targetUrl, userAgent)
+                // Load URL inside ChromeBrowserView active tab (if open), otherwise fallback to the standard automation view
+                val chromeTab = getActiveTab()
+                if (isChromeBrowserOpen && chromeTab != null) {
+                    addTerminalLog("🤖 توجيه الأتمتة المباشرة إلى علامة التبويب المفتوحة للبروفايل...")
+                    chromeTab.url = targetUrl
+                    chromeTab.webView?.let { webView ->
+                        webView.settings.userAgentString = userAgent
+                        webView.loadUrl(targetUrl)
+                        viewModelScope.launch {
+                            try {
+                                delay(1500)
+                                webView.evaluateJavascript("window.scrollBy({ top: 350, behavior: 'smooth' });", null)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                } else {
+                    // Load URL inside live UI WebView (standard fallback)
+                    onNavigateToUrl(targetUrl, userAgent)
+                }
 
                 addTerminalLog("⏳ محاكاة التصفح والتمرير البشري في صفحة محرك البحث...")
                 // Mimic reading / interaction delays (9-12 seconds on screen)
@@ -811,6 +1031,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             activeTabIdxPerProfile[pId] = 0
         }
         addTerminalLog("🚀 تم تشغيل متصفح كروم المطور للبروفايل: ${profile.name}")
+        viewModelScope.launch {
+            applyActiveVpnOrProxy()
+        }
     }
 
     fun closeChromeBrowser() {
