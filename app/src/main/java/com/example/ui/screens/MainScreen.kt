@@ -2441,6 +2441,11 @@ fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
     webView.settings.javaScriptCanOpenWindowsAutomatically = true
     webView.settings.mediaPlaybackRequiresUserGesture = false
 
+    // Enable Pinch-to-Zoom support (Finger Zooming)
+    webView.settings.setSupportZoom(true)
+    webView.settings.builtInZoomControls = true
+    webView.settings.displayZoomControls = false
+
     // Allow loading HTTPS/HTTP mixed content for web compatibility
     webView.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
@@ -2579,19 +2584,24 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 6. Canvas cryptographic noise spoofing
+            // 6. Canvas cryptographic noise spoofing (Robust context and crash prevention)
             if ($canvasNoise) {
                 try {
                     const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
                     HTMLCanvasElement.prototype.toDataURL = function(type, encoderOptions) {
-                        const ctx = this.getContext('2d');
-                        if (ctx) {
-                            const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10) || 1, Math.min(this.height, 10) || 1);
-                            if (imgData.data.length > 0) {
-                                imgData.data[0] = (imgData.data[0] + 1) % 256;
-                                ctx.putImageData(imgData, 0, 0);
+                        try {
+                            const isWebGL = this.getContext('webgl') || this.getContext('webgl2');
+                            if (!isWebGL) {
+                                const ctx = this.getContext('2d');
+                                if (ctx) {
+                                    const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10) || 1, Math.min(this.height, 10) || 1);
+                                    if (imgData && imgData.data && imgData.data.length > 0) {
+                                        imgData.data[0] = (imgData.data[0] + 1) % 256;
+                                        ctx.putImageData(imgData, 0, 0);
+                                    }
+                                }
                             }
-                        }
+                        } catch(inner) {}
                         return originalToDataURL.call(this, type, encoderOptions);
                     };
                 } catch(e) {}
@@ -2631,17 +2641,34 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 9. ClientRects Fingerprinting Defender
+            // 9. ClientRects Fingerprinting Defender (Standard-compliant clone to prevent read-only TypeError)
             if ($rectsNoise) {
                 try {
                     const originalGetClientRects = Element.prototype.getClientRects;
                     Element.prototype.getClientRects = function() {
-                        const rects = originalGetClientRects.call(this);
-                        if (rects && rects.length > 0) {
-                            rects[0].width += 0.0001;
-                            rects[0].height += 0.0001;
+                        try {
+                            const rects = originalGetClientRects.call(this);
+                            if (rects && rects.length > 0) {
+                                const clonedRects = [];
+                                for (let i = 0; i < rects.length; i++) {
+                                    const r = rects[i];
+                                    clonedRects.push({
+                                        x: r.x + 0.0001,
+                                        y: r.y + 0.0001,
+                                        width: r.width + 0.0001,
+                                        height: r.height + 0.0001,
+                                        top: r.top + 0.0001,
+                                        right: r.right + 0.0001,
+                                        bottom: r.bottom + 0.0001,
+                                        left: r.left + 0.0001
+                                    });
+                                }
+                                return clonedRects;
+                            }
+                            return rects;
+                        } catch(inner) {
+                            return originalGetClientRects.call(this);
                         }
-                        return rects;
                     };
                 } catch(e) {}
             }
