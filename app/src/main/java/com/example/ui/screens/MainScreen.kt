@@ -368,8 +368,8 @@ fun ChromeBrowserView(
                     profile.userAgent
                 }
                 webView.settings.userAgentString = userAgent
-                webView.settings.useWideViewPort = true
-                webView.settings.loadWithOverviewMode = true
+                webView.settings.useWideViewPort = tab.isDesktopMode
+                webView.settings.loadWithOverviewMode = tab.isDesktopMode
                 webView.reload()
             }
         }
@@ -820,8 +820,8 @@ fun ChromeBrowserView(
                                     settings.databaseEnabled = true
                                     settings.allowFileAccess = true
                                     settings.allowContentAccess = true
-                                    settings.loadWithOverviewMode = true
-                                    settings.useWideViewPort = true
+                                    settings.loadWithOverviewMode = activeTab.isDesktopMode
+                                    settings.useWideViewPort = activeTab.isDesktopMode
                                     settings.javaScriptCanOpenWindowsAutomatically = true
                                     settings.mediaPlaybackRequiresUserGesture = false
                                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
@@ -913,7 +913,7 @@ fun ChromeBrowserView(
                                             }
                                         }
                                     }
-                                    applyProfileToWebView(this, profile)
+                                    applyProfileToWebView(this, profile, activeTab.isDesktopMode)
                                     loadUrl(activeTab.url)
                                 }
                                 activeTab.webView = webView
@@ -2426,7 +2426,7 @@ fun DashboardTab(
 }
 
 // Global Profile Application Logic (Desktop Chrome-like Isolation)
-fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
+fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?, isDesktopMode: Boolean = false) {
     if (profile == null) return
 
     // Enable high-compatibility browser settings for standard modern websites
@@ -2436,8 +2436,8 @@ fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
     webView.settings.databaseEnabled = true
     webView.settings.allowFileAccess = true
     webView.settings.allowContentAccess = true
-    webView.settings.loadWithOverviewMode = true
-    webView.settings.useWideViewPort = true
+    webView.settings.loadWithOverviewMode = isDesktopMode
+    webView.settings.useWideViewPort = isDesktopMode
     webView.settings.javaScriptCanOpenWindowsAutomatically = true
     webView.settings.mediaPlaybackRequiresUserGesture = false
 
@@ -2806,8 +2806,8 @@ fun AutopilotTab(
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
-                                settings.loadWithOverviewMode = true
-                                settings.useWideViewPort = true
+                                settings.loadWithOverviewMode = false
+                                settings.useWideViewPort = false
                                 webViewClient = object : WebViewClient() {
                                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                         super.onPageStarted(view, url, favicon)
@@ -2823,7 +2823,7 @@ fun AutopilotTab(
                                 }
 
                                 // Apply secure isolated browser profile
-                                applyProfileToWebView(this, defaultProfile)
+                                applyProfileToWebView(this, defaultProfile, false)
 
                                 onWebViewCreated(this)
                                 loadUrl("https://www.bing.com")
