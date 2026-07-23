@@ -2641,7 +2641,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 9. ClientRects Fingerprinting Defender (Standard-compliant clone to prevent read-only TypeError)
+            // 9. ClientRects Fingerprinting Defender (Standard-compliant DOMRectList & DOMRect mimicking to prevent TypeError crashes on Bing/Google)
             if ($rectsNoise) {
                 try {
                     const originalGetClientRects = Element.prototype.getClientRects;
@@ -2652,7 +2652,7 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                                 const clonedRects = [];
                                 for (let i = 0; i < rects.length; i++) {
                                     const r = rects[i];
-                                    clonedRects.push({
+                                    const clonedRect = {
                                         x: r.x + 0.0001,
                                         y: r.y + 0.0001,
                                         width: r.width + 0.0001,
@@ -2661,8 +2661,22 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                                         right: r.right + 0.0001,
                                         bottom: r.bottom + 0.0001,
                                         left: r.left + 0.0001
-                                    });
+                                    };
+                                    // Make sure it looks like a standard DOMRect
+                                    Object.setPrototypeOf(clonedRect, DOMRect.prototype);
+                                    clonedRects.push(clonedRect);
                                 }
+
+                                // Mimic standard DOMRectList with .item(index) method and read-only .length property
+                                Object.defineProperty(clonedRects, 'item', {
+                                    value: function(index) {
+                                        return this[index] || null;
+                                    },
+                                    writable: false,
+                                    enumerable: false,
+                                    configurable: false
+                                });
+                                Object.setPrototypeOf(clonedRects, DOMRectList.prototype);
                                 return clonedRects;
                             }
                             return rects;
