@@ -2,6 +2,13 @@ package com.example.ui.screens
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
+import android.webkit.ValueCallback
+import android.webkit.JsResult
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -9,9 +16,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import android.graphics.Bitmap
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,184 +80,180 @@ fun MainScreen(
     val defaultProfile by viewModel.defaultProfile.collectAsStateWithLifecycle()
 
     var activeWebViewReference by remember { mutableStateOf<WebView?>(null) }
-    var isBrowserFullScreen by remember { mutableStateOf(false) }
 
-    // Enforce RTL Layout Direction for beautiful Arabic-first design
+    // Enforce RTL Layout Direction for beautiful Arabic-first design, but keep LTR for Chrome Browser view to match standard Chrome browser layout
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         if (viewModel.isSplashActive) {
             BingSplashScreen()
         } else {
-            Scaffold(
+            Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
                 topBar = {
-                    if (!isBrowserFullScreen || viewModel.selectedTab != 1) {
-                        TopAppBar(
-                            title = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    // Miniature Glowing Bango Logo Badge
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(
-                                                Brush.linearGradient(
-                                                    colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
-                                                )
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "B",
-                                            color = Color.White,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Black,
-                                            modifier = Modifier.offset(y = (-1).dp)
-                                        )
-                                    }
-                                    Column {
-                                        Text(
-                                            text = "برنامج بانجو الآلي v2",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            text = "متصفح التخفي المطور • أمن وحماية الهوية 🛡️",
-                                            fontSize = 10.sp,
-                                            color = Color.LightGray.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
-                            },
-                            actions = {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Miniature Glowing Bango Logo Badge
                                 Box(
                                     modifier = Modifier
-                                        .padding(end = 16.dp)
+                                        .size(32.dp)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(if (viewModel.isAutomationRunning) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF1E2F4C))
-                                        .border(1.dp, if (viewModel.isAutomationRunning) Color(0xFF10B981) else Color.Transparent, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
+                                            )
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                                        val alpha by infiniteTransition.animateFloat(
-                                            initialValue = 0.3f,
-                                            targetValue = 1f,
-                                            animationSpec = infiniteRepeatable(
-                                                animation = tween(1000, easing = LinearEasing),
-                                                repeatMode = RepeatMode.Reverse
-                                            ),
-                                            label = "pulse"
-                                        )
+                                    Text(
+                                        text = "B",
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Black,
+                                        modifier = Modifier.offset(y = (-1).dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "برنامج بانجو الآلي v2",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "متصفح التخفي المطور • أمن وحماية الهوية 🛡️",
+                                        fontSize = 10.sp,
+                                        color = Color.LightGray.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+                        },
+                        actions = {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 16.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (viewModel.isAutomationRunning) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF1E2F4C))
+                                    .border(1.dp, if (viewModel.isAutomationRunning) Color(0xFF10B981) else Color.Transparent, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                                    val alpha by infiniteTransition.animateFloat(
+                                        initialValue = 0.3f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1000, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        ),
+                                        label = "pulse"
+                                    )
 
-                                        if (viewModel.isAutomationRunning) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(8.dp)
-                                                    .drawBehind {
-                                                        drawCircle(
-                                                            color = Color(0xFF10B981),
-                                                            alpha = alpha
-                                                        )
-                                                    }
-                                            )
-                                            Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(8.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color.Gray)
-                                            )
-                                            Text("مستعد للخمول", fontSize = 11.sp, color = Color.Gray)
-                                        }
+                                    if (viewModel.isAutomationRunning) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .drawBehind {
+                                                    drawCircle(
+                                                        color = Color(0xFF10B981),
+                                                        alpha = alpha
+                                                    )
+                                                }
+                                        )
+                                        Text("أتمتة نشطة حية", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.Gray)
+                                        )
+                                        Text("مستعد للخمول", fontSize = 11.sp, color = Color.Gray)
                                     }
                                 }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = SurfaceDark
-                            )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = SurfaceDark
                         )
-                    }
+                    )
                 },
                 bottomBar = {
-                    if (!isBrowserFullScreen || viewModel.selectedTab != 1) {
-                        NavigationBar(
-                            containerColor = SurfaceDark,
-                            tonalElevation = 8.dp
-                        ) {
-                            NavigationBarItem(
-                                selected = viewModel.selectedTab == 0,
-                                onClick = { viewModel.selectedTab = 0 },
-                                icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
-                                label = { Text("بينج اليوم") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFF4CAF50),
-                                    selectedTextColor = Color(0xFF4CAF50),
-                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                    unselectedIconColor = Color.LightGray,
-                                    unselectedTextColor = Color.LightGray
-                                )
+                    NavigationBar(
+                        containerColor = SurfaceDark,
+                        tonalElevation = 8.dp
+                    ) {
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 0,
+                            onClick = { viewModel.selectedTab = 0 },
+                            icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
+                            label = { Text("بينج اليوم") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
                             )
-                            NavigationBarItem(
-                                selected = viewModel.selectedTab == 1,
-                                onClick = { viewModel.selectedTab = 1 },
-                                icon = { Icon(Icons.Default.PlayArrow, contentDescription = "المتصفح") },
-                                label = { Text("المتصفح") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFF4CAF50),
-                                    selectedTextColor = Color(0xFF4CAF50),
-                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                    unselectedIconColor = Color.LightGray,
-                                    unselectedTextColor = Color.LightGray
-                                )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 1,
+                            onClick = { viewModel.selectedTab = 1 },
+                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = "المتصفح") },
+                            label = { Text("المتصفح") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
                             )
-                            NavigationBarItem(
-                                selected = viewModel.selectedTab == 2,
-                                onClick = { viewModel.selectedTab = 2 },
-                                icon = { Icon(Icons.Default.Build, contentDescription = "لوحة الأوامر") },
-                                label = { Text("لوحة الأوامر") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFF4CAF50),
-                                    selectedTextColor = Color(0xFF4CAF50),
-                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                    unselectedIconColor = Color.LightGray,
-                                    unselectedTextColor = Color.LightGray
-                                )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 2,
+                            onClick = { viewModel.selectedTab = 2 },
+                            icon = { Icon(Icons.Default.Build, contentDescription = "لوحة الأوامر") },
+                            label = { Text("لوحة الأوامر") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
                             )
-                            NavigationBarItem(
-                                selected = viewModel.selectedTab == 3,
-                                onClick = { viewModel.selectedTab = 3 },
-                                icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
-                                label = { Text("الشبكة") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFF4CAF50),
-                                    selectedTextColor = Color(0xFF4CAF50),
-                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                    unselectedIconColor = Color.LightGray,
-                                    unselectedTextColor = Color.LightGray
-                                )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 3,
+                            onClick = { viewModel.selectedTab = 3 },
+                            icon = { Icon(Icons.Default.Lock, contentDescription = "خوادم الوكيل") },
+                            label = { Text("الشبكة") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
                             )
-                            NavigationBarItem(
-                                selected = viewModel.selectedTab == 4,
-                                onClick = { viewModel.selectedTab = 4 },
-                                icon = { Icon(Icons.Default.Person, contentDescription = "البروفايلات") },
-                                label = { Text("الهويات") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFF4CAF50),
-                                    selectedTextColor = Color(0xFF4CAF50),
-                                    indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
-                                    unselectedIconColor = Color.LightGray,
-                                    unselectedTextColor = Color.LightGray
-                                )
+                        )
+                        NavigationBarItem(
+                            selected = viewModel.selectedTab == 4,
+                            onClick = { viewModel.selectedTab = 4 },
+                            icon = { Icon(Icons.Default.Person, contentDescription = "البروفايلات") },
+                            label = { Text("الهويات") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF4CAF50),
+                                selectedTextColor = Color(0xFF4CAF50),
+                                indicatorColor = Color(0xFF1E6B38).copy(alpha = 0.25f),
+                                unselectedIconColor = Color.LightGray,
+                                unselectedTextColor = Color.LightGray
                             )
-                        }
+                        )
                     }
                 },
                 containerColor = BackgroundDark,
@@ -254,7 +262,7 @@ fun MainScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(if (isBrowserFullScreen && viewModel.selectedTab == 1) PaddingValues(0.dp) else paddingValues)
+                        .padding(paddingValues)
                 ) {
                     when (viewModel.selectedTab) {
                         0 -> DashboardTab(
@@ -287,9 +295,6 @@ fun MainScreen(
                         1 -> AutopilotTab(
                             viewModel = viewModel,
                             defaultProfile = defaultProfile,
-                            activeWebViewReference = activeWebViewReference,
-                            isFullScreen = isBrowserFullScreen,
-                            onFullScreenToggle = { isBrowserFullScreen = !isBrowserFullScreen },
                             onWebViewCreated = { webView ->
                                 activeWebViewReference = webView
                             }
@@ -308,6 +313,1290 @@ fun MainScreen(
                         )
                     }
                 }
+            }
+            if (viewModel.isChromeBrowserOpen) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    ChromeBrowserView(viewModel = viewModel)
+                }
+            }
+            } // end of Box wrapping Scaffold
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChromeBrowserView(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier
+) {
+    val profile = viewModel.activeChromeProfile ?: return
+    val tabs = viewModel.chromeTabsPerProfile[profile.id] ?: remember { mutableStateListOf() }
+    val activeTabIdx = viewModel.activeTabIdxPerProfile[profile.id] ?: 0
+    val activeTab = if (activeTabIdx in tabs.indices) tabs[activeTabIdx] else null
+
+    var menuExpanded by remember { mutableStateOf(false) }
+    var addressBarInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
+    var showBookmarksDialog by remember { mutableStateOf(false) }
+    var showProfileSelectorInBrowser by remember { mutableStateOf(false) }
+
+    // Bookmarks logic or additional states can go here...
+
+    // File choosing launcher
+    var uploadMessageCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+    val fileChooserLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data?.data
+            val uris = if (data != null) arrayOf(data) else null
+            uploadMessageCallback?.onReceiveValue(uris)
+        } else {
+            uploadMessageCallback?.onReceiveValue(null)
+        }
+        uploadMessageCallback = null
+    }
+
+    // JS alerts / confirm dialogs
+    var jsAlertMessage by remember { mutableStateOf<String?>(null) }
+    var jsAlertResult by remember { mutableStateOf<JsResult?>(null) }
+    var jsConfirmMessage by remember { mutableStateOf<String?>(null) }
+    var jsConfirmResult by remember { mutableStateOf<JsResult?>(null) }
+
+    // Desktop Site effect
+    LaunchedEffect(activeTab, activeTab?.isDesktopMode) {
+        activeTab?.let { tab ->
+            tab.webView?.let { webView ->
+                val userAgent = if (tab.isDesktopMode) {
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                } else {
+                    profile.userAgent
+                }
+                webView.settings.userAgentString = userAgent
+                webView.settings.useWideViewPort = tab.isDesktopMode
+                webView.settings.loadWithOverviewMode = tab.isDesktopMode
+                webView.reload()
+            }
+        }
+    }
+
+    // Bookmarks Dialog
+    if (showBookmarksDialog) {
+        AlertDialog(
+            onDismissRequest = { showBookmarksDialog = false },
+            title = { Text("الإشارات المرجعية 🔖", fontWeight = FontWeight.Bold, color = Color.White) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                TextButton(onClick = { showBookmarksDialog = false }) {
+                    Text("إغلاق", color = Color(0xFF4CAF50))
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (viewModel.bookmarks.isEmpty()) {
+                        Text("لا توجد إشارات مرجعية حالياً.", color = Color.Gray, fontSize = 12.sp)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(viewModel.bookmarks.toList()) { b ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(BackgroundDark)
+                                        .clickable {
+                                            showBookmarksDialog = false
+                                            activeTab?.let { tab ->
+                                                tab.url = b.second
+                                                tab.webView?.loadUrl(b.second)
+                                            }
+                                        }
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(b.first, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(b.second, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
+                                    IconButton(onClick = { viewModel.removeBookmark(b.second) }, modifier = Modifier.size(24.dp)) {
+                                        Icon(Icons.Default.Delete, contentDescription = "مسح", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    // JS Alert Dialog
+    if (jsAlertMessage != null) {
+        AlertDialog(
+            onDismissRequest = {
+                jsAlertResult?.cancel()
+                jsAlertMessage = null
+                jsAlertResult = null
+            },
+            title = { Text("تنبيه الصفحة 🌐", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(jsAlertMessage ?: "", color = Color.LightGray) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        jsAlertResult?.confirm()
+                        jsAlertMessage = null
+                        jsAlertResult = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("موافق")
+                }
+            }
+        )
+    }
+
+    // JS Confirm Dialog
+    if (jsConfirmMessage != null) {
+        AlertDialog(
+            onDismissRequest = {
+                jsConfirmResult?.cancel()
+                jsConfirmMessage = null
+                jsConfirmResult = null
+            },
+            title = { Text("تأكيد من الصفحة 🌐", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(jsConfirmMessage ?: "", color = Color.LightGray) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        jsConfirmResult?.confirm()
+                        jsConfirmMessage = null
+                        jsConfirmResult = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("موافق")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        jsConfirmResult?.cancel()
+                        jsConfirmMessage = null
+                        jsConfirmResult = null
+                    }
+                ) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(BackgroundDark)
+            .clickable(enabled = false) {}
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // --- Chrome Authentic Multi-Tab & Toolbar Header ---
+            Surface(
+                color = SurfaceDark,
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    // 1. Horizontal Scrollable Tab Bar (Themed / Active Tab Styling)
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp)
+                            .background(Color(0xFF1E1F22))
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        items(tabs.size) { index ->
+                            val tab = tabs[index]
+                            val isSelected = index == activeTabIdx
+
+                            // Beautiful Chrome Tab Shape Composable
+                            Row(
+                                modifier = Modifier
+                                    .width(135.dp)
+                                    .height(34.dp)
+                                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                                    .background(if (isSelected) SurfaceDark else Color(0xFF2B2D31))
+                                    .clickable { viewModel.selectTabForActiveChrome(index) }
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    // Simulated Site Favicon or Globe
+                                    Text(
+                                        text = if (tab.url.contains("google")) "🔍" else if (tab.url.contains("bing")) "🎯" else "🌐",
+                                        fontSize = 11.sp
+                                    )
+                                    Text(
+                                        text = tab.title,
+                                        fontSize = 11.sp,
+                                        color = if (isSelected) Color.White else Color.LightGray,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.closeTabForActiveChrome(tab.id) },
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = if (isSelected) Color.White else Color.Gray,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Secondary Chrome Control & Address Bar Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // 1. Back button
+                        IconButton(
+                            onClick = { activeTab?.webView?.goBack() },
+                            enabled = activeTab?.canGoBack == true,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = if (activeTab?.canGoBack == true) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // 2. Forward button
+                        IconButton(
+                            onClick = { activeTab?.webView?.goForward() },
+                            enabled = activeTab?.canGoForward == true,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowForward,
+                                contentDescription = "Forward",
+                                tint = if (activeTab?.canGoForward == true) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // 3. Home button
+                        IconButton(
+                            onClick = {
+                                activeTab?.let {
+                                    it.url = ""
+                                    it.title = "علامة تبويب جديدة"
+                                    it.webView?.loadUrl("about:blank")
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Home",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // 4. Address Bar with Lock, Input and Reload (Weight 1f)
+                        val isHttps = addressBarInput.startsWith("https")
+                        val isHttp = addressBarInput.startsWith("http:")
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(BackgroundDark)
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(18.dp))
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isHttps) Icons.Default.Lock else if (isHttp) Icons.Default.Warning else Icons.Default.Info,
+                                    contentDescription = "Security Status",
+                                    tint = if (isHttps) Color(0xFF10B981) else if (isHttp) Color(0xFFFBBF24) else Color.Gray,
+                                    modifier = Modifier.size(14.dp)
+                                )
+
+                                Box(modifier = Modifier.weight(1f)) {
+                                    if (addressBarInput.isEmpty()) {
+                                        Text(
+                                            text = "ابحث أو أدخل عنوان ويب...",
+                                            fontSize = 11.sp,
+                                            color = Color.Gray,
+                                            maxLines = 1
+                                        )
+                                    }
+                                    androidx.compose.foundation.text.BasicTextField(
+                                        value = addressBarInput,
+                                        onValueChange = { addressBarInput = it },
+                                        textStyle = androidx.compose.ui.text.TextStyle(
+                                            color = Color.White,
+                                            fontSize = 12.sp
+                                        ),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = androidx.compose.ui.text.input.ImeAction.Go),
+                                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                            onGo = {
+                                                activeTab?.let { tab ->
+                                                    var target = addressBarInput.trim()
+                                                    if (target.isNotEmpty()) {
+                                                        if (!target.startsWith("http://") && !target.startsWith("https://")) {
+                                                            target = if (target.contains(".") && !target.contains(" ")) {
+                                                                "https://$target"
+                                                            } else {
+                                                                "https://www.bing.com/search?q=" + java.net.URLEncoder.encode(target, "UTF-8")
+                                                            }
+                                                        }
+                                                        tab.url = target
+                                                        tab.webView?.loadUrl(target)
+                                                    }
+                                                }
+                                            }
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                if (addressBarInput.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { addressBarInput = "" },
+                                        modifier = Modifier.size(16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color.Gray, modifier = Modifier.size(12.dp))
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = { activeTab?.webView?.reload() },
+                                    modifier = Modifier.size(20.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Reload",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        // 5. Tab switcher button
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .border(1.5.dp, Color.White, RoundedCornerShape(6.dp))
+                                .clickable { viewModel.isTabSwitcherOpen = !viewModel.isTabSwitcherOpen },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${tabs.size}",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // 6. New tab '+' button
+                        IconButton(
+                            onClick = { viewModel.openNewTabForActiveChrome() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+
+                        // 7. Dynamic Profile Avatar Switcher Icon (In-Browser profile selector)
+                        Box {
+                            IconButton(
+                                onClick = { showProfileSelectorInBrowser = true },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(Color(0xFF4CAF50), Color(0xFF1E6B38))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = profile.name.take(1).uppercase(),
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            if (showProfileSelectorInBrowser) {
+                                val profilesList by viewModel.profiles.collectAsStateWithLifecycle()
+                                AlertDialog(
+                                    onDismissRequest = { showProfileSelectorInBrowser = false },
+                                    title = { Text("تبديل البروفايل السريع 👤", fontWeight = FontWeight.Bold, color = Color.White) },
+                                    containerColor = SurfaceDark,
+                                    confirmButton = {
+                                        TextButton(onClick = { showProfileSelectorInBrowser = false }) {
+                                            Text("إغلاق", color = Color(0xFF4CAF50))
+                                        }
+                                    },
+                                    text = {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            Text("اختر الهوية المعزولة للانتقال الفوري وتحديث الحاوية:", color = Color.LightGray, fontSize = 11.sp)
+                                            LazyColumn(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(max = 250.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                items(profilesList) { p ->
+                                                    val isCurrent = p.id == profile.id
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(8.dp))
+                                                            .background(if (isCurrent) Color(0xFF1E6B38).copy(alpha = 0.2f) else BackgroundDark)
+                                                            .border(1.dp, if (isCurrent) Color(0xFF4CAF50) else Color.Transparent, RoundedCornerShape(8.dp))
+                                                            .clickable {
+                                                                showProfileSelectorInBrowser = false
+                                                                viewModel.launchChromeBrowser(p)
+                                                            }
+                                                            .padding(10.dp),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Column {
+                                                            Text(p.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                            Text(p.tag, color = Color.Gray, fontSize = 10.sp)
+                                                        }
+                                                        if (isCurrent) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(4.dp))
+                                                                    .background(Color(0xFF1B3B2B))
+                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text("نشط", fontSize = 9.sp, color = Color(0xFF10B981))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        // 8. ⋮ Menu
+                        Box {
+                            IconButton(
+                                onClick = { menuExpanded = true },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White, modifier = Modifier.size(20.dp))
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                                modifier = Modifier.background(SurfaceDark)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("علامة تبويب جديدة", color = Color.White) },
+                                    onClick = {
+                                        viewModel.openNewTabForActiveChrome()
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("الإشارات المرجعية 🔖", color = Color.White) },
+                                    onClick = {
+                                        showBookmarksDialog = true
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Checkbox(
+                                                checked = activeTab?.isDesktopMode == true,
+                                                onCheckedChange = { checked ->
+                                                    activeTab?.let { it.isDesktopMode = checked }
+                                                    menuExpanded = false
+                                                },
+                                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
+                                            )
+                                            Text("موقع سطح المكتب 💻", color = Color.White)
+                                        }
+                                    },
+                                    onClick = {
+                                        activeTab?.let { it.isDesktopMode = !it.isDesktopMode }
+                                        menuExpanded = false
+                                    }
+                                )
+                                if (activeTab != null && activeTab.url.isNotEmpty() && activeTab.url != "about:blank") {
+                                    DropdownMenuItem(
+                                        text = { Text("إضافة للإشارات المرجعية ⭐", color = Color.White) },
+                                        onClick = {
+                                            viewModel.addBookmark(activeTab.title, activeTab.url)
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                                if (viewModel.selectedVpnServerId == "vpn_eg" && viewModel.isBuiltInVpnEnabled) {
+                                    DropdownMenuItem(
+                                        text = { Text("تدوير عنوان IP المصري 🇪🇬", color = Color(0xFF10B981), fontWeight = FontWeight.Bold) },
+                                        onClick = {
+                                            viewModel.rotateEgyptProxy()
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = if (viewModel.isAutomationRunning) "إيقاف الأتمتة التلقائية 🛑" else "تشغيل الأتمتة التلقائية 🤖",
+                                            color = if (viewModel.isAutomationRunning) Color.Yellow else Color(0xFF4CAF50),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        if (viewModel.isAutomationRunning) {
+                                            viewModel.stopLiveAutomation()
+                                        } else {
+                                            viewModel.startLiveAutomation { url, ua ->
+                                                // Handled internally!
+                                            }
+                                        }
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("مسح ملفات الكوكيز بالكامل 🧹", color = Color.White) },
+                                    onClick = {
+                                        viewModel.clearAllCookiesForActiveProfile()
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("إغلاق التبويب الحالي ✖", color = Color.White) },
+                                    onClick = {
+                                        activeTab?.let { viewModel.closeTabForActiveChrome(it.id) }
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("إغلاق المتصفح المطور 🚪", color = Color.Red) },
+                                    onClick = {
+                                        viewModel.closeChromeBrowser()
+                                        menuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+
+                        // 9. Close Browser button
+                        IconButton(
+                            onClick = { viewModel.closeChromeBrowser() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Close Browser", tint = Color.LightGray, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                if (activeTab == null || activeTab.url.isEmpty() || activeTab.url == "about:blank") {
+                    BangoNewTabPage(
+                        viewModel = viewModel,
+                        onNavigate = { targetUrl ->
+                            activeTab?.let { tab ->
+                                tab.url = targetUrl
+                                tab.webView?.let { it.loadUrl(targetUrl) }
+                            }
+                        }
+                    )
+                } else {
+                    // Robust caching layer: Render all open tabs, conceal inactive ones using Modifier.size(0.dp) to keep views alive
+                    tabs.forEachIndexed { idx, tab ->
+                        val isActive = idx == activeTabIdx
+                        Box(
+                            modifier = if (isActive) Modifier.fillMaxSize() else Modifier.size(0.dp)
+                        ) {
+                            key(tab.id) {
+                                AndroidView(
+                                    factory = { context ->
+                                        val webView = tab.webView ?: android.webkit.WebView(context).apply {
+                                            settings.javaScriptEnabled = true
+                                            settings.domStorageEnabled = true
+                                            settings.databaseEnabled = true
+                                            settings.allowFileAccess = true
+                                            settings.allowContentAccess = true
+                                            settings.loadWithOverviewMode = tab.isDesktopMode
+                                            settings.useWideViewPort = tab.isDesktopMode
+                                            settings.javaScriptCanOpenWindowsAutomatically = true
+                                            settings.mediaPlaybackRequiresUserGesture = false
+                                            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+                                            webChromeClient = object : android.webkit.WebChromeClient() {
+                                                override fun onProgressChanged(view: android.webkit.WebView?, newProgress: Int) {
+                                                    super.onProgressChanged(view, newProgress)
+                                                    tab.progress = newProgress
+                                                    tab.isLoading = newProgress < 100
+                                                }
+
+                                                override fun onShowFileChooser(
+                                                    webView: android.webkit.WebView?,
+                                                    filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
+                                                    fileChooserParams: android.webkit.WebChromeClient.FileChooserParams?
+                                                ): Boolean {
+                                                    uploadMessageCallback?.onReceiveValue(null)
+                                                    uploadMessageCallback = filePathCallback
+                                                    val intent = fileChooserParams?.createIntent() ?: android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                                                        type = "*/*"
+                                                        addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                                                    }
+                                                    try {
+                                                        fileChooserLauncher.launch(intent)
+                                                    } catch (e: Exception) {
+                                                        uploadMessageCallback?.onReceiveValue(null)
+                                                        uploadMessageCallback = null
+                                                        return false
+                                                    }
+                                                    return true
+                                                }
+
+                                                override fun onJsAlert(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                                    jsAlertMessage = message
+                                                    jsAlertResult = result
+                                                    return true
+                                                }
+
+                                                override fun onJsConfirm(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                                    jsConfirmMessage = message
+                                                    jsConfirmResult = result
+                                                    return true
+                                                }
+                                            }
+
+                                            webViewClient = object : android.webkit.WebViewClient() {
+                                                override fun onPageStarted(view: android.webkit.WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                                    super.onPageStarted(view, url, favicon)
+                                                    tab.isLoading = true
+                                                    val js = generateAntiFingerprintScript(profile)
+                                                    view?.evaluateJavascript(js, null)
+                                                }
+
+                                                override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                                                    super.onPageFinished(view, url)
+                                                    tab.isLoading = false
+                                                    tab.canGoBack = view?.canGoBack() ?: false
+                                                    tab.canGoForward = view?.canGoForward() ?: false
+                                                    if (url != null && url != "about:blank") {
+                                                        tab.url = url
+                                                        tab.title = view?.title ?: "صفحة ويب"
+                                                    }
+                                                    val js = generateAntiFingerprintScript(profile)
+                                                    view?.evaluateJavascript(js, null)
+                                                }
+
+                                                override fun doUpdateVisitedHistory(view: android.webkit.WebView?, url: String?, isReload: Boolean) {
+                                                    super.doUpdateVisitedHistory(view, url, isReload)
+                                                    tab.canGoBack = view?.canGoBack() ?: false
+                                                    tab.canGoForward = view?.canGoForward() ?: false
+                                                    if (url != null && url != "about:blank") {
+                                                        tab.url = url
+                                                    }
+                                                }
+
+                                                override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                                    val url = request?.url?.toString() ?: return false
+                                                    if (url.startsWith("http://") || url.startsWith("https://")) {
+                                                        return false
+                                                    }
+                                                    try {
+                                                        val intent = android.content.Intent.parseUri(url, android.content.Intent.URI_INTENT_SCHEME)
+                                                        val context = view?.context
+                                                        context?.startActivity(intent)
+                                                        return true
+                                                    } catch (e: Exception) {
+                                                        e.printStackTrace()
+                                                        return true
+                                                    }
+                                                }
+                                            }
+                                            applyProfileToWebView(this, profile, tab.isDesktopMode)
+                                            loadUrl(tab.url)
+                                        }
+                                        tab.webView = webView
+                                        webView
+                                    },
+                                    update = { webView ->
+                                        if (tab.webView != webView) {
+                                            tab.webView = webView
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (activeTab?.isLoading == true) {
+                    LinearProgressIndicator(
+                        progress = activeTab.progress / 100f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .align(Alignment.TopCenter),
+                        color = Color(0xFF4CAF50),
+                        trackColor = Color.Transparent
+                    )
+                }
+            }
+        }
+
+        if (viewModel.isTabSwitcherOpen) {
+            TabSwitcherOverlay(viewModel = viewModel)
+        }
+    }
+}
+
+@Composable
+fun BangoNewTabPage(
+    viewModel: MainViewModel,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var searchQueryInput by remember { mutableStateOf("") }
+    var showAddShortcutDialog by remember { mutableStateOf(false) }
+    var shortcutTitleInput by remember { mutableStateOf("") }
+    var shortcutUrlInput by remember { mutableStateOf("") }
+    var shortcutEmojiInput by remember { mutableStateOf("") }
+
+    if (showAddShortcutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddShortcutDialog = false },
+            title = { Text("إضافة اختصار جديد 🔗", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = SurfaceDark,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.addCustomShortcut(shortcutTitleInput, shortcutUrlInput, shortcutEmojiInput)
+                        shortcutTitleInput = ""
+                        shortcutUrlInput = ""
+                        shortcutEmojiInput = ""
+                        showAddShortcutDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                    enabled = shortcutUrlInput.isNotBlank()
+                ) {
+                    Text("حفظ")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddShortcutDialog = false }) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = shortcutTitleInput,
+                        onValueChange = { shortcutTitleInput = it },
+                        label = { Text("عنوان الموقع", color = Color.LightGray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                    OutlinedTextField(
+                        value = shortcutUrlInput,
+                        onValueChange = { shortcutUrlInput = it },
+                        label = { Text("رابط الموقع (URL)", color = Color.LightGray) },
+                        placeholder = { Text("example.com") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                    OutlinedTextField(
+                        value = shortcutEmojiInput,
+                        onValueChange = { shortcutEmojiInput = it },
+                        label = { Text("إيموجي كأيقونة (مثل: 📺, 💻)", color = Color.LightGray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    )
+                }
+            }
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF030A05),
+                        Color(0xFF07140B),
+                        Color(0xFF0A1C10)
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFF1E6B38), Color(0xFF4CAF50))
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "B",
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "تبويب مالي منعزل آمن ✨",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "تصفح آمن مجهول البصمات ومحمي بالكامل",
+                    fontSize = 10.sp,
+                    color = Color.LightGray.copy(alpha = 0.8f)
+                )
+            }
+
+            // Central Search Bar
+            OutlinedTextField(
+                value = searchQueryInput,
+                onValueChange = { searchQueryInput = it },
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .height(48.dp),
+                placeholder = { Text("ابحث في الويب أو أدخل عنوان ويب...", color = Color.Gray, fontSize = 11.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "بحث", tint = Color.Gray, modifier = Modifier.size(16.dp)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                    onSearch = {
+                        if (searchQueryInput.isNotBlank()) {
+                            var target = searchQueryInput.trim()
+                            if (!target.startsWith("http://") && !target.startsWith("https://")) {
+                                target = if (target.contains(".") && !target.contains(" ")) {
+                                    "https://$target"
+                                } else {
+                                    "https://www.bing.com/search?q=" + java.net.URLEncoder.encode(target, "UTF-8")
+                                }
+                            }
+                            onNavigate(target)
+                        }
+                    }
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = SurfaceDark,
+                    unfocusedContainerColor = SurfaceDark,
+                    focusedBorderColor = Color(0xFF4CAF50),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                shape = RoundedCornerShape(24.dp)
+            )
+
+            // --- Interactive Security Shield Dashboard ---
+            val activeProfile = viewModel.activeChromeProfile
+            val shieldProxy = activeProfile?.let { if (!it.proxyHost.isNullOrEmpty()) "${it.proxyHost}:${it.proxyPort}" else "اتصال مباشر ⚠️" } ?: "اتصال مباشر ⚠️"
+            val rtcStatus = activeProfile?.webRtcSpoof ?: "BLOCK"
+            val cpuCores = activeProfile?.hardwareConcurrency ?: 8
+            val deviceRam = activeProfile?.deviceMemory ?: 8
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1E14)),
+                border = BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(0.95f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = "Shield", tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
+                            Text("درع حماية الهوية والتحقق من التزييف (Shield Status)", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFF1B3B2B))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("محمي 100% ✅", color = Color(0xFF10B981), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Divider(color = Color.White.copy(alpha = 0.05f))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("🌐 عنوان الـ IP النشط: $shieldProxy", color = Color.LightGray, fontSize = 10.sp)
+                            Text("🛡️ تزييف WebRTC: $rtcStatus", color = Color.LightGray, fontSize = 10.sp)
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("💻 تزييف Canvas/WebGL: مفعل نشط 🛡️", color = Color.LightGray, fontSize = 10.sp)
+                            Text("⚙️ موارد المعالج والرام: $cpuCores Cores / ${deviceRam}GB RAM", color = Color.LightGray, fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "الوصول السريع للمواقع الأكثر شعبية:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4CAF50)
+                )
+                TextButton(onClick = { showAddShortcutDialog = true }) {
+                    Text("+ إضافة اختصار", color = Color(0xFF4CAF50), fontSize = 11.sp)
+                }
+            }
+
+            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(3),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp)
+            ) {
+                items(viewModel.customShortcuts.size) { index ->
+                    val shortcut = viewModel.customShortcuts[index]
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier
+                                    .clickable { onNavigate(shortcut.second) }
+                                    .padding(8.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(BackgroundDark),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(shortcut.third, fontSize = 14.sp)
+                                }
+                                Text(
+                                    text = shortcut.first,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.removeCustomShortcut(shortcut.second) },
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .align(Alignment.TopEnd)
+                                    .padding(2.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "مسح", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(10.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TabSwitcherOverlay(
+    viewModel: MainViewModel,
+    modifier: Modifier = Modifier
+) {
+    val profile = viewModel.activeChromeProfile ?: return
+    val tabs = viewModel.chromeTabsPerProfile[profile.id] ?: remember { mutableStateListOf() }
+    val activeTabIdx = viewModel.activeTabIdxPerProfile[profile.id] ?: 0
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.9f))
+            .clickable { viewModel.isTabSwitcherOpen = false }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "مبدل التبويبات النشطة (العدد: ${tabs.size}) 📑",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { viewModel.openNewTabForActiveChrome() },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2E7D32))
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+
+                    IconButton(
+                        onClick = { viewModel.isTabSwitcherOpen = false },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close Tab Switcher", tint = Color.White)
+                    }
+                }
+            }
+
+            Divider(color = Color.White.copy(alpha = 0.15f))
+
+            androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                items(tabs.size) { index ->
+                    val tab = tabs[index]
+                    val isSelected = index == activeTabIdx
+                    Card(
+                        onClick = { viewModel.selectTabForActiveChrome(index) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) Color(0xFF1E2F1A) else SurfaceCard
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .border(
+                                width = if (isSelected) 2.5.dp else 1.dp,
+                                color = if (isSelected) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                // Tab Header (Mimics Chrome UI Tab card header)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelected) Color(0xFF2A3D25) else Color(0xFF2D2E30))
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = if (tab.url.contains("google")) "🔍" else if (tab.url.contains("bing")) "🎯" else "🌐",
+                                        fontSize = 11.sp
+                                    )
+                                    Text(
+                                        text = tab.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+
+                                // Tab Body Content (Visual Preview Simulation with active state)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(10.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = if (tab.url.isEmpty()) "تبويب مالي منعزل آمن ✨" else tab.url,
+                                            fontSize = 9.sp,
+                                            color = Color.LightGray,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = "حاوية بروفايل: ${profile.name}",
+                                            fontSize = 8.sp,
+                                            color = Color.Gray,
+                                            maxLines = 1
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(Color.White.copy(alpha = 0.05f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = "مؤقت ومحفوظ 💾",
+                                                fontSize = 8.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                        if (tab.isDesktopMode) {
+                                            Icon(
+                                                Icons.Default.Build,
+                                                contentDescription = "Desktop Mode",
+                                                tint = Color(0xFF10B981),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { viewModel.closeTabForActiveChrome(tab.id) },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.5f))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close Tab",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Add Tab button at bottom
+            Button(
+                onClick = { viewModel.openNewTabForActiveChrome() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "أضف تبويب")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("فتح علامة تبويب جديدة ➕", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1379,14 +2668,37 @@ fun DashboardTab(
 }
 
 // Global Profile Application Logic (Desktop Chrome-like Isolation)
-fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
+fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?, isDesktopMode: Boolean = false) {
     if (profile == null) return
 
-    // Set UA
+    // Enable high-compatibility browser settings for standard modern websites
     webView.settings.userAgentString = profile.userAgent
     webView.settings.javaScriptEnabled = true
     webView.settings.domStorageEnabled = true
     webView.settings.databaseEnabled = true
+    webView.settings.allowFileAccess = true
+    webView.settings.allowContentAccess = true
+    webView.settings.loadWithOverviewMode = isDesktopMode
+    webView.settings.useWideViewPort = isDesktopMode
+    webView.settings.javaScriptCanOpenWindowsAutomatically = true
+    webView.settings.mediaPlaybackRequiresUserGesture = false
+
+    // Enable Pinch-to-Zoom support (Finger Zooming)
+    webView.settings.setSupportZoom(true)
+    webView.settings.builtInZoomControls = true
+    webView.settings.displayZoomControls = false
+
+    // Allow loading HTTPS/HTTP mixed content for web compatibility
+    webView.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+    // Explicitly accept cookies and third-party cookies for logging in & compatibility
+    try {
+        val cookieManager = android.webkit.CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
 
     // Apply multi-profile isolation if supported on runtime device
     if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.MULTI_PROFILE)) {
@@ -1394,19 +2706,6 @@ fun applyProfileToWebView(webView: WebView, profile: BrowserProfile?) {
             val profileStore = androidx.webkit.ProfileStore.getInstance()
             profileStore.getOrCreateProfile(profile.dataSuffix)
             androidx.webkit.WebViewCompat.setProfile(webView, profile.dataSuffix)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-    } else {
-        // Fallback: Clear/isolate dynamically on switch to prevent contamination
-        try {
-            val cookieManager = android.webkit.CookieManager.getInstance()
-            cookieManager.removeAllCookies(null)
-            cookieManager.flush()
-            webView.clearCache(true)
-            webView.clearFormData()
-            webView.clearHistory()
-            android.webkit.WebStorage.getInstance().deleteAllData()
         } catch (e: Throwable) {
             e.printStackTrace()
         }
@@ -1527,19 +2826,24 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 6. Canvas cryptographic noise spoofing
+            // 6. Canvas cryptographic noise spoofing (Robust context and crash prevention)
             if ($canvasNoise) {
                 try {
                     const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
                     HTMLCanvasElement.prototype.toDataURL = function(type, encoderOptions) {
-                        const ctx = this.getContext('2d');
-                        if (ctx) {
-                            const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10) || 1, Math.min(this.height, 10) || 1);
-                            if (imgData.data.length > 0) {
-                                imgData.data[0] = (imgData.data[0] + 1) % 256;
-                                ctx.putImageData(imgData, 0, 0);
+                        try {
+                            const isWebGL = this.getContext('webgl') || this.getContext('webgl2');
+                            if (!isWebGL) {
+                                const ctx = this.getContext('2d');
+                                if (ctx) {
+                                    const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10) || 1, Math.min(this.height, 10) || 1);
+                                    if (imgData && imgData.data && imgData.data.length > 0) {
+                                        imgData.data[0] = (imgData.data[0] + 1) % 256;
+                                        ctx.putImageData(imgData, 0, 0);
+                                    }
+                                }
                             }
-                        }
+                        } catch(inner) {}
                         return originalToDataURL.call(this, type, encoderOptions);
                     };
                 } catch(e) {}
@@ -1579,17 +2883,48 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
                 } catch(e) {}
             }
 
-            // 9. ClientRects Fingerprinting Defender
+            // 9. ClientRects Fingerprinting Defender (Standard-compliant DOMRectList & DOMRect mimicking to prevent TypeError crashes on Bing/Google)
             if ($rectsNoise) {
                 try {
                     const originalGetClientRects = Element.prototype.getClientRects;
                     Element.prototype.getClientRects = function() {
-                        const rects = originalGetClientRects.call(this);
-                        if (rects && rects.length > 0) {
-                            rects[0].width += 0.0001;
-                            rects[0].height += 0.0001;
+                        try {
+                            const rects = originalGetClientRects.call(this);
+                            if (rects && rects.length > 0) {
+                                const clonedRects = [];
+                                for (let i = 0; i < rects.length; i++) {
+                                    const r = rects[i];
+                                    const clonedRect = {
+                                        x: r.x + 0.0001,
+                                        y: r.y + 0.0001,
+                                        width: r.width + 0.0001,
+                                        height: r.height + 0.0001,
+                                        top: r.top + 0.0001,
+                                        right: r.right + 0.0001,
+                                        bottom: r.bottom + 0.0001,
+                                        left: r.left + 0.0001
+                                    };
+                                    // Make sure it looks like a standard DOMRect
+                                    Object.setPrototypeOf(clonedRect, DOMRect.prototype);
+                                    clonedRects.push(clonedRect);
+                                }
+
+                                // Mimic standard DOMRectList with .item(index) method and read-only .length property
+                                Object.defineProperty(clonedRects, 'item', {
+                                    value: function(index) {
+                                        return this[index] || null;
+                                    },
+                                    writable: false,
+                                    enumerable: false,
+                                    configurable: false
+                                });
+                                Object.setPrototypeOf(clonedRects, DOMRectList.prototype);
+                                return clonedRects;
+                            }
+                            return rects;
+                        } catch(inner) {
+                            return originalGetClientRects.call(this);
                         }
-                        return rects;
                     };
                 } catch(e) {}
             }
@@ -1601,100 +2936,91 @@ fun generateAntiFingerprintScript(profile: BrowserProfile?): String {
 fun AutopilotTab(
     viewModel: MainViewModel,
     defaultProfile: BrowserProfile?,
-    activeWebViewReference: WebView?,
-    isFullScreen: Boolean,
-    onFullScreenToggle: () -> Unit,
     onWebViewCreated: (WebView) -> Unit
 ) {
-    var urlInput by remember { mutableStateOf("https://www.bing.com") }
-    var canGoBackState by remember { mutableStateOf(false) }
-    var canGoForwardState by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(if (isFullScreen) 2.dp else 12.dp),
-        verticalArrangement = Arrangement.spacedBy(if (isFullScreen) 4.dp else 12.dp)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Automation Sandbox Status Header Card (Hidden when maximized for 100% full screen)
-        if (!isFullScreen) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                modifier = Modifier.fillMaxWidth()
+        // Automation Sandbox Status Header Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Active", tint = Color(0xFF4CAF50))
-                            Text(
-                                text = "مرصد تصفح الويب المباشر 🔬",
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        if (viewModel.isAutomationRunning) {
-                            Button(
-                                onClick = { viewModel.stopLiveAutomation() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Stop", modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("إيقاف دورة الأتمتة", fontSize = 11.sp)
-                            }
-                        }
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Active", tint = Color(0xFF4CAF50))
+                        Text(
+                            text = "مرصد تصفح الويب المباشر 🔬",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
                     }
 
                     if (viewModel.isAutomationRunning) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(SurfaceCard)
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        Button(
+                            onClick = { viewModel.stopLiveAutomation() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text(
-                                text = "الاستعلام النشط حالياً (${viewModel.activeAutomationQueryIndex + 1} من 8):",
-                                fontSize = 11.sp,
-                                color = Color(0xFF4CAF50)
-                            )
-                            Text(
-                                text = viewModel.activeAutomationQueryText,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.LightGray)
-                                Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
+                            Icon(Icons.Default.Refresh, contentDescription = "Stop", modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("إيقاف دورة الأتمتة", fontSize = 11.sp)
                         }
-                    } else {
-                        Text(
-                            text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. يمكنك إدخال أي رابط للتصفح مباشرة أو تشغيل دورة البحث المباشرة من 'بينج اليوم'.",
-                            fontSize = 12.sp,
-                            color = Color.LightGray
-                        )
                     }
+                }
+
+                if (viewModel.isAutomationRunning) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceCard)
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "الاستعلام النشط حالياً (${viewModel.activeAutomationQueryIndex + 1} من 8):",
+                            fontSize = 11.sp,
+                            color = Color(0xFF4CAF50)
+                        )
+                        Text(
+                            text = viewModel.activeAutomationQueryText,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("المحرك: ${viewModel.activeAutomationEngineName}", fontSize = 10.sp, color = Color.LightGray)
+                            Text("الوكيل: ${viewModel.activeAutomationProxyUsed}", fontSize = 10.sp, color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "المتصفح في وضع الخمول وجاهز للانطلاق الآمن. انتقل إلى 'بينج اليوم' لبدء تشغيل دورة البحث المباشرة وعرض محاكاة السلوك البشري.",
+                        fontSize = 12.sp,
+                        color = Color.LightGray
+                    )
                 }
             }
         }
@@ -1709,121 +3035,25 @@ fun AutopilotTab(
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Interactive Address Bar and Navigation Controls Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(SurfaceCard)
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Back button
-                    IconButton(
-                        onClick = {
-                            activeWebViewReference?.let { webView ->
-                                if (webView.canGoBack()) {
-                                    webView.goBack()
-                                }
-                            }
-                        },
-                        enabled = canGoBackState,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "السابق",
-                            tint = if (canGoBackState) Color.White else Color.Gray
-                        )
-                    }
-
-                    // Forward button
-                    IconButton(
-                        onClick = {
-                            activeWebViewReference?.let { webView ->
-                                if (webView.canGoForward()) {
-                                    webView.goForward()
-                                }
-                            }
-                        },
-                        enabled = canGoForwardState,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "التالي",
-                            tint = if (canGoForwardState) Color.White else Color.Gray
-                        )
-                    }
-
-                    // Reload button
-                    IconButton(
-                        onClick = {
-                            activeWebViewReference?.reload()
-                        },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "تحديث",
-                            tint = Color.White
-                        )
-                    }
-
-                    // Address Bar Text Field
-                    OutlinedTextField(
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4CAF50),
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedContainerColor = BackgroundDark,
-                            unfocusedContainerColor = BackgroundDark,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(24.dp),
-                        singleLine = true,
-                        placeholder = { Text("أدخل عنوان الموقع (e.g. google.com)", color = Color.Gray, fontSize = 11.sp) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    activeWebViewReference?.let { webView ->
-                                        var targetUrl = urlInput.trim()
-                                        if (targetUrl.isNotEmpty()) {
-                                            if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-                                                targetUrl = "https://$targetUrl"
-                                            }
-                                            webView.loadUrl(targetUrl)
-                                        }
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "ذهاب",
-                                    tint = Color(0xFF4CAF50)
-                                )
-                            }
-                        }
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFEF4444)))
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFBBF24)))
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF34D399)))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "نافذة المتصفح المحمي وعزل الهويات الكلي",
+                        fontSize = 11.sp,
+                        color = Color.LightGray,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
-
-                    // SLEEK FULL SCREEN / MAXIMIZE TOGGLE BUTTON!
-                    IconButton(
-                        onClick = { onFullScreenToggle() },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f), CircleShape)
-                    ) {
-                        Text(
-                            text = if (isFullScreen) "📱" else "🖥️",
-                            fontSize = 18.sp
-                        )
-                    }
                 }
 
                 AndroidView(
@@ -1832,30 +3062,24 @@ fun AutopilotTab(
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
-                                settings.loadWithOverviewMode = true
-                                settings.useWideViewPort = true
+                                settings.loadWithOverviewMode = false
+                                settings.useWideViewPort = false
                                 webViewClient = object : WebViewClient() {
                                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                         super.onPageStarted(view, url, favicon)
                                         val js = generateAntiFingerprintScript(defaultProfile)
                                         view?.evaluateJavascript(js, null)
-                                        url?.let { urlInput = it }
-                                        canGoBackState = view?.canGoBack() == true
-                                        canGoForwardState = view?.canGoForward() == true
                                     }
 
                                     override fun onPageFinished(view: WebView?, url: String?) {
                                         super.onPageFinished(view, url)
                                         val js = generateAntiFingerprintScript(defaultProfile)
                                         view?.evaluateJavascript(js, null)
-                                        url?.let { urlInput = it }
-                                        canGoBackState = view?.canGoBack() == true
-                                        canGoForwardState = view?.canGoForward() == true
                                     }
                                 }
 
                                 // Apply secure isolated browser profile
-                                applyProfileToWebView(this, defaultProfile)
+                                applyProfileToWebView(this, defaultProfile, false)
 
                                 onWebViewCreated(this)
                                 loadUrl("https://www.bing.com")
@@ -2602,11 +3826,11 @@ fun ProfilesTab(
                             label = { Text("معرّف البصمة (User-Agent)") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF4CAF50),
-                                    unfocusedBorderColor = Color.Gray,
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                ),
+                                focusedBorderColor = Color(0xFF4CAF50),
+                                unfocusedBorderColor = Color.Gray,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
                             singleLine = true,
                             textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp)
                         )
@@ -2977,30 +4201,45 @@ fun ProfilesTab(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Button(
+                                    onClick = { viewModel.launchChromeBrowser(profile) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Run",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text("تشغيل المتصفح 🚀", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+
                                 Button(
                                     onClick = { viewModel.toggleProfileActive(profile) },
                                     colors = ButtonDefaults.buttonColors(containerColor = if (isActive) Color.Gray else Color(0xFF10B981)),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                     enabled = !isActive
                                 ) {
-                                    Text("تثبيت وتفعيل 🚀", fontSize = 11.sp)
+                                    Text("تثبيت 🎯", fontSize = 10.sp)
                                 }
 
                                 OutlinedButton(
                                     onClick = { viewModel.deleteProfile(profile.id) },
                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                                     border = BorderStroke(1.dp, Color(0xFFEF4444)),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                     enabled = !isActive && profiles.size > 1
                                 ) {
-                                    Text("حذف 🗑", fontSize = 11.sp)
+                                    Text("حذف 🗑", fontSize = 10.sp)
                                 }
                             }
 
                             Text(
-                                text = "حاوية: " + profile.dataSuffix.take(15) + "...",
-                                fontSize = 10.sp,
+                                text = "حاوية: " + profile.dataSuffix.take(12) + "...",
+                                fontSize = 9.sp,
                                 color = Color.Gray
                             )
                         }
