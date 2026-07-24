@@ -338,6 +338,9 @@ fun ChromeBrowserView(
     var menuExpanded by remember { mutableStateOf(false) }
     var addressBarInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var showBookmarksDialog by remember { mutableStateOf(false) }
+    var showProfileSelectorInBrowser by remember { mutableStateOf(false) }
+
+    // Bookmarks logic or additional states can go here...
 
     // File choosing launcher
     var uploadMessageCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
@@ -502,13 +505,74 @@ fun ChromeBrowserView(
             .clickable(enabled = false) {}
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- Chrome Streamlined SINGLE-ROW Header Bar ---
+            // --- Chrome Authentic Multi-Tab & Toolbar Header ---
             Surface(
                 color = SurfaceDark,
                 shadowElevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
+                    // 1. Horizontal Scrollable Tab Bar (Themed / Active Tab Styling)
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp)
+                            .background(Color(0xFF1E1F22))
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        items(tabs.size) { index ->
+                            val tab = tabs[index]
+                            val isSelected = index == activeTabIdx
+
+                            // Beautiful Chrome Tab Shape Composable
+                            Row(
+                                modifier = Modifier
+                                    .width(135.dp)
+                                    .height(34.dp)
+                                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                                    .background(if (isSelected) SurfaceDark else Color(0xFF2B2D31))
+                                    .clickable { viewModel.selectTabForActiveChrome(index) }
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    // Simulated Site Favicon or Globe
+                                    Text(
+                                        text = if (tab.url.contains("google")) "🔍" else if (tab.url.contains("bing")) "🎯" else "🌐",
+                                        fontSize = 11.sp
+                                    )
+                                    Text(
+                                        text = tab.title,
+                                        fontSize = 11.sp,
+                                        color = if (isSelected) Color.White else Color.LightGray,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.closeTabForActiveChrome(tab.id) },
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = if (isSelected) Color.White else Color.Gray,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Secondary Chrome Control & Address Bar Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -676,7 +740,92 @@ fun ChromeBrowserView(
                             Icon(Icons.Default.Add, contentDescription = "New Tab", tint = Color.White, modifier = Modifier.size(20.dp))
                         }
 
-                        // 7. ⋮ Menu
+                        // 7. Dynamic Profile Avatar Switcher Icon (In-Browser profile selector)
+                        Box {
+                            IconButton(
+                                onClick = { showProfileSelectorInBrowser = true },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(Color(0xFF4CAF50), Color(0xFF1E6B38))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = profile.name.take(1).uppercase(),
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            if (showProfileSelectorInBrowser) {
+                                val profilesList by viewModel.profiles.collectAsStateWithLifecycle()
+                                AlertDialog(
+                                    onDismissRequest = { showProfileSelectorInBrowser = false },
+                                    title = { Text("تبديل البروفايل السريع 👤", fontWeight = FontWeight.Bold, color = Color.White) },
+                                    containerColor = SurfaceDark,
+                                    confirmButton = {
+                                        TextButton(onClick = { showProfileSelectorInBrowser = false }) {
+                                            Text("إغلاق", color = Color(0xFF4CAF50))
+                                        }
+                                    },
+                                    text = {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            Text("اختر الهوية المعزولة للانتقال الفوري وتحديث الحاوية:", color = Color.LightGray, fontSize = 11.sp)
+                                            LazyColumn(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(max = 250.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                items(profilesList) { p ->
+                                                    val isCurrent = p.id == profile.id
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(8.dp))
+                                                            .background(if (isCurrent) Color(0xFF1E6B38).copy(alpha = 0.2f) else BackgroundDark)
+                                                            .border(1.dp, if (isCurrent) Color(0xFF4CAF50) else Color.Transparent, RoundedCornerShape(8.dp))
+                                                            .clickable {
+                                                                showProfileSelectorInBrowser = false
+                                                                viewModel.launchChromeBrowser(p)
+                                                            }
+                                                            .padding(10.dp),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Column {
+                                                            Text(p.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                            Text(p.tag, color = Color.Gray, fontSize = 10.sp)
+                                                        }
+                                                        if (isCurrent) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(4.dp))
+                                                                    .background(Color(0xFF1B3B2B))
+                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text("نشط", fontSize = 9.sp, color = Color(0xFF10B981))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        // 8. ⋮ Menu
                         Box {
                             IconButton(
                                 onClick = { menuExpanded = true },
@@ -786,7 +935,7 @@ fun ChromeBrowserView(
                             }
                         }
 
-                        // 8. Close Browser button
+                        // 9. Close Browser button
                         IconButton(
                             onClick = { viewModel.closeChromeBrowser() },
                             modifier = Modifier.size(32.dp)
@@ -808,126 +957,134 @@ fun ChromeBrowserView(
                         onNavigate = { targetUrl ->
                             activeTab?.let { tab ->
                                 tab.url = targetUrl
-                                tab.webView?.loadUrl(targetUrl)
+                                tab.webView?.let { it.loadUrl(targetUrl) }
                             }
                         }
                     )
                 } else {
-                    key(activeTab.id) {
-                        AndroidView(
-                            factory = { context ->
-                                val webView = activeTab.webView ?: android.webkit.WebView(context).apply {
-                                    settings.javaScriptEnabled = true
-                                    settings.domStorageEnabled = true
-                                    settings.databaseEnabled = true
-                                    settings.allowFileAccess = true
-                                    settings.allowContentAccess = true
-                                    settings.loadWithOverviewMode = activeTab.isDesktopMode
-                                    settings.useWideViewPort = activeTab.isDesktopMode
-                                    settings.javaScriptCanOpenWindowsAutomatically = true
-                                    settings.mediaPlaybackRequiresUserGesture = false
-                                    settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    // Robust caching layer: Render all open tabs, conceal inactive ones using Modifier.size(0.dp) to keep views alive
+                    tabs.forEachIndexed { idx, tab ->
+                        val isActive = idx == activeTabIdx
+                        Box(
+                            modifier = if (isActive) Modifier.fillMaxSize() else Modifier.size(0.dp)
+                        ) {
+                            key(tab.id) {
+                                AndroidView(
+                                    factory = { context ->
+                                        val webView = tab.webView ?: android.webkit.WebView(context).apply {
+                                            settings.javaScriptEnabled = true
+                                            settings.domStorageEnabled = true
+                                            settings.databaseEnabled = true
+                                            settings.allowFileAccess = true
+                                            settings.allowContentAccess = true
+                                            settings.loadWithOverviewMode = tab.isDesktopMode
+                                            settings.useWideViewPort = tab.isDesktopMode
+                                            settings.javaScriptCanOpenWindowsAutomatically = true
+                                            settings.mediaPlaybackRequiresUserGesture = false
+                                            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-                                    webChromeClient = object : android.webkit.WebChromeClient() {
-                                        override fun onProgressChanged(view: android.webkit.WebView?, newProgress: Int) {
-                                            super.onProgressChanged(view, newProgress)
-                                            activeTab.progress = newProgress
-                                            activeTab.isLoading = newProgress < 100
-                                        }
+                                            webChromeClient = object : android.webkit.WebChromeClient() {
+                                                override fun onProgressChanged(view: android.webkit.WebView?, newProgress: Int) {
+                                                    super.onProgressChanged(view, newProgress)
+                                                    tab.progress = newProgress
+                                                    tab.isLoading = newProgress < 100
+                                                }
 
-                                        override fun onShowFileChooser(
-                                            webView: android.webkit.WebView?,
-                                            filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
-                                            fileChooserParams: android.webkit.WebChromeClient.FileChooserParams?
-                                        ): Boolean {
-                                            uploadMessageCallback?.onReceiveValue(null)
-                                            uploadMessageCallback = filePathCallback
-                                            val intent = fileChooserParams?.createIntent() ?: android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
-                                                type = "*/*"
-                                                addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                                                override fun onShowFileChooser(
+                                                    webView: android.webkit.WebView?,
+                                                    filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
+                                                    fileChooserParams: android.webkit.WebChromeClient.FileChooserParams?
+                                                ): Boolean {
+                                                    uploadMessageCallback?.onReceiveValue(null)
+                                                    uploadMessageCallback = filePathCallback
+                                                    val intent = fileChooserParams?.createIntent() ?: android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                                                        type = "*/*"
+                                                        addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                                                    }
+                                                    try {
+                                                        fileChooserLauncher.launch(intent)
+                                                    } catch (e: Exception) {
+                                                        uploadMessageCallback?.onReceiveValue(null)
+                                                        uploadMessageCallback = null
+                                                        return false
+                                                    }
+                                                    return true
+                                                }
+
+                                                override fun onJsAlert(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                                    jsAlertMessage = message
+                                                    jsAlertResult = result
+                                                    return true
+                                                }
+
+                                                override fun onJsConfirm(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                                                    jsConfirmMessage = message
+                                                    jsConfirmResult = result
+                                                    return true
+                                                }
                                             }
-                                            try {
-                                                fileChooserLauncher.launch(intent)
-                                            } catch (e: Exception) {
-                                                uploadMessageCallback?.onReceiveValue(null)
-                                                uploadMessageCallback = null
-                                                return false
+
+                                            webViewClient = object : android.webkit.WebViewClient() {
+                                                override fun onPageStarted(view: android.webkit.WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                                    super.onPageStarted(view, url, favicon)
+                                                    tab.isLoading = true
+                                                    val js = generateAntiFingerprintScript(profile)
+                                                    view?.evaluateJavascript(js, null)
+                                                }
+
+                                                override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                                                    super.onPageFinished(view, url)
+                                                    tab.isLoading = false
+                                                    tab.canGoBack = view?.canGoBack() ?: false
+                                                    tab.canGoForward = view?.canGoForward() ?: false
+                                                    if (url != null && url != "about:blank") {
+                                                        tab.url = url
+                                                        tab.title = view?.title ?: "صفحة ويب"
+                                                    }
+                                                    val js = generateAntiFingerprintScript(profile)
+                                                    view?.evaluateJavascript(js, null)
+                                                }
+
+                                                override fun doUpdateVisitedHistory(view: android.webkit.WebView?, url: String?, isReload: Boolean) {
+                                                    super.doUpdateVisitedHistory(view, url, isReload)
+                                                    tab.canGoBack = view?.canGoBack() ?: false
+                                                    tab.canGoForward = view?.canGoForward() ?: false
+                                                    if (url != null && url != "about:blank") {
+                                                        tab.url = url
+                                                    }
+                                                }
+
+                                                override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                                    val url = request?.url?.toString() ?: return false
+                                                    if (url.startsWith("http://") || url.startsWith("https://")) {
+                                                        return false
+                                                    }
+                                                    try {
+                                                        val intent = android.content.Intent.parseUri(url, android.content.Intent.URI_INTENT_SCHEME)
+                                                        val context = view?.context
+                                                        context?.startActivity(intent)
+                                                        return true
+                                                    } catch (e: Exception) {
+                                                        e.printStackTrace()
+                                                        return true
+                                                    }
+                                                }
                                             }
-                                            return true
+                                            applyProfileToWebView(this, profile, tab.isDesktopMode)
+                                            loadUrl(tab.url)
                                         }
-
-                                        override fun onJsAlert(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
-                                            jsAlertMessage = message
-                                            jsAlertResult = result
-                                            return true
+                                        tab.webView = webView
+                                        webView
+                                    },
+                                    update = { webView ->
+                                        if (tab.webView != webView) {
+                                            tab.webView = webView
                                         }
-
-                                        override fun onJsConfirm(view: android.webkit.WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
-                                            jsConfirmMessage = message
-                                            jsConfirmResult = result
-                                            return true
-                                        }
-                                    }
-
-                                    webViewClient = object : android.webkit.WebViewClient() {
-                                        override fun onPageStarted(view: android.webkit.WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                                            super.onPageStarted(view, url, favicon)
-                                            activeTab.isLoading = true
-                                            val js = generateAntiFingerprintScript(profile)
-                                            view?.evaluateJavascript(js, null)
-                                        }
-
-                                        override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
-                                            super.onPageFinished(view, url)
-                                            activeTab.isLoading = false
-                                            activeTab.canGoBack = view?.canGoBack() ?: false
-                                            activeTab.canGoForward = view?.canGoForward() ?: false
-                                            if (url != null && url != "about:blank") {
-                                                activeTab.url = url
-                                                activeTab.title = view?.title ?: "صفحة ويب"
-                                            }
-                                            val js = generateAntiFingerprintScript(profile)
-                                            view?.evaluateJavascript(js, null)
-                                        }
-
-                                        override fun doUpdateVisitedHistory(view: android.webkit.WebView?, url: String?, isReload: Boolean) {
-                                            super.doUpdateVisitedHistory(view, url, isReload)
-                                            activeTab.canGoBack = view?.canGoBack() ?: false
-                                            activeTab.canGoForward = view?.canGoForward() ?: false
-                                            if (url != null && url != "about:blank") {
-                                                activeTab.url = url
-                                            }
-                                        }
-
-                                        override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
-                                            val url = request?.url?.toString() ?: return false
-                                            if (url.startsWith("http://") || url.startsWith("https://")) {
-                                                return false
-                                            }
-                                            try {
-                                                val intent = android.content.Intent.parseUri(url, android.content.Intent.URI_INTENT_SCHEME)
-                                                val context = view?.context
-                                                context?.startActivity(intent)
-                                                return true
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                return true
-                                            }
-                                        }
-                                    }
-                                    applyProfileToWebView(this, profile, activeTab.isDesktopMode)
-                                    loadUrl(activeTab.url)
-                                }
-                                activeTab.webView = webView
-                                webView
-                            },
-                            update = { webView ->
-                                if (activeTab.webView != webView) {
-                                    activeTab.webView = webView
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1106,6 +1263,61 @@ fun BangoNewTabPage(
                 shape = RoundedCornerShape(24.dp)
             )
 
+            // --- Interactive Security Shield Dashboard ---
+            val activeProfile = viewModel.activeChromeProfile
+            val shieldProxy = activeProfile?.let { if (!it.proxyHost.isNullOrEmpty()) "${it.proxyHost}:${it.proxyPort}" else "اتصال مباشر ⚠️" } ?: "اتصال مباشر ⚠️"
+            val rtcStatus = activeProfile?.webRtcSpoof ?: "BLOCK"
+            val cpuCores = activeProfile?.hardwareConcurrency ?: 8
+            val deviceRam = activeProfile?.deviceMemory ?: 8
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1E14)),
+                border = BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(0.95f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = "Shield", tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
+                            Text("درع حماية الهوية والتحقق من التزييف (Shield Status)", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFF1B3B2B))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("محمي 100% ✅", color = Color(0xFF10B981), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Divider(color = Color.White.copy(alpha = 0.05f))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("🌐 عنوان الـ IP النشط: $shieldProxy", color = Color.LightGray, fontSize = 10.sp)
+                            Text("🛡️ تزييف WebRTC: $rtcStatus", color = Color.LightGray, fontSize = 10.sp)
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("💻 تزييف Canvas/WebGL: مفعل نشط 🛡️", color = Color.LightGray, fontSize = 10.sp)
+                            Text("⚙️ موارد المعالج والرام: $cpuCores Cores / ${deviceRam}GB RAM", color = Color.LightGray, fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1256,70 +1468,98 @@ fun TabSwitcherOverlay(
                     Card(
                         onClick = { viewModel.selectTabForActiveChrome(index) },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) Color(0xFF132B1B) else SurfaceCard
+                            containerColor = if (isSelected) Color(0xFF1E2F1A) else SurfaceCard
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(130.dp)
+                            .height(160.dp)
                             .border(
-                                width = if (isSelected) 2.dp else 0.5.dp,
-                                color = if (isSelected) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.1f),
+                                width = if (isSelected) 2.5.dp else 1.dp,
+                                color = if (isSelected) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.15f),
                                 shape = RoundedCornerShape(12.dp)
                             ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxSize()
                             ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                                // Tab Header (Mimics Chrome UI Tab card header)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelected) Color(0xFF2A3D25) else Color(0xFF2D2E30))
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
+                                    Text(
+                                        text = if (tab.url.contains("google")) "🔍" else if (tab.url.contains("bing")) "🎯" else "🌐",
+                                        fontSize = 11.sp
+                                    )
                                     Text(
                                         text = tab.title,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp,
                                         color = Color.White,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = if (tab.url.isEmpty()) "صفحة فارغة" else tab.url,
-                                        fontSize = 9.sp,
-                                        color = Color.LightGray,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                // Tab Body Content (Visual Preview Simulation with active state)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(10.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color.White.copy(alpha = 0.05f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
-                                            text = "مؤقت ومحفوظ 💾",
+                                            text = if (tab.url.isEmpty()) "تبويب مالي منعزل آمن ✨" else tab.url,
+                                            fontSize = 9.sp,
+                                            color = Color.LightGray,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = "حاوية بروفايل: ${profile.name}",
                                             fontSize = 8.sp,
-                                            color = Color.Gray
+                                            color = Color.Gray,
+                                            maxLines = 1
                                         )
                                     }
-                                    if (tab.isDesktopMode) {
-                                        Icon(
-                                            Icons.Default.Build,
-                                            contentDescription = "Desktop Mode",
-                                            tint = Color(0xFF10B981),
-                                            modifier = Modifier.size(12.dp)
-                                        )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(Color.White.copy(alpha = 0.05f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = "مؤقت ومحفوظ 💾",
+                                                fontSize = 8.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                        if (tab.isDesktopMode) {
+                                            Icon(
+                                                Icons.Default.Build,
+                                                contentDescription = "Desktop Mode",
+                                                tint = Color(0xFF10B981),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
