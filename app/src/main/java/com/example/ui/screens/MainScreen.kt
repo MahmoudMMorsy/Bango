@@ -81,7 +81,7 @@ fun MainScreen(
 
     var activeWebViewReference by remember { mutableStateOf<WebView?>(null) }
 
-    // Enforce RTL Layout Direction for beautiful Arabic-first design
+    // Enforce RTL Layout Direction for beautiful Arabic-first design, but keep LTR for Chrome Browser view to match standard Chrome browser layout
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         if (viewModel.isSplashActive) {
             BingSplashScreen()
@@ -315,7 +315,9 @@ fun MainScreen(
                 }
             }
             if (viewModel.isChromeBrowserOpen) {
-                ChromeBrowserView(viewModel = viewModel)
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    ChromeBrowserView(viewModel = viewModel)
+                }
             }
             } // end of Box wrapping Scaffold
         }
